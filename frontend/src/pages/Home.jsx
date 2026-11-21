@@ -526,14 +526,6 @@ const Home = () => {
 
           {/* Mobile Right Controls: Hamburger Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            {!user && (
-              <Link
-                to="/register"
-                className="bg-black text-white px-3 py-1.5 rounded-full font-bold text-xs shadow-sm"
-              >
-                Get Charge
-              </Link>
-            )}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -558,18 +550,64 @@ const Home = () => {
               {user ? (
                 <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-gray-400 font-semibold uppercase">Signed in as</div>
+                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Signed in as</div>
                     <div className="text-sm font-bold text-black">{user.name} ({user.role})</div>
                   </div>
-                  <Link
-                    to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
-                  >
-                    Dashboard
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        logout();
+                      }}
+                      className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-200 transition"
+                      title="Log out"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              ) : null}
+              ) : (
+                /* Prominent Get a Charge & Account Actions for Guests */
+                <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-gray-50 to-cyan-50 rounded-2xl border border-emerald-100 space-y-2.5">
+                  <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                    Instant Mobile EV Charging
+                  </div>
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full bg-black hover:bg-gray-900 text-white text-center py-2.5 px-4 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition"
+                  >
+                    <Car className="h-4 w-4 text-emerald-400" />
+                    <span>Get a Charge (Sign Up)</span>
+                    <ArrowRight className="h-3.5 w-3.5 ml-auto" />
+                  </Link>
+                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      to="/register-provider"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-center py-2 px-3 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-50 transition shadow-sm flex items-center justify-center gap-1"
+                    >
+                      <Zap className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>Host Charger</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {/* Navigation Options List */}
               <div className="space-y-1">
