@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config/api';
 import { Battery, Zap, MapPin, Clock, LogOut, CheckCircle, Car, Search, Navigation, AlertCircle, XCircle, Phone, Mail, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LiveBikerTracking from '../components/LiveBikerTracking';
 
 const RiderDashboard = () => {
   const { user, extraData, logout } = useContext(AuthContext);
@@ -32,7 +33,7 @@ const RiderDashboard = () => {
         const requests = reqRes.data;
         setMyRequests(requests);
         
-        const active = requests.find(r => ['PENDING', 'ACCEPTED', 'ARRIVED'].includes(r.status));
+        const active = requests.find(r => ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED'].includes(r.status));
         setActiveRequest(active || null);
 
         const sessionRes = await axios.get(`${API_BASE_URL}/api/charging/active`, { headers: { Authorization: `Bearer ${token}` } });
@@ -44,7 +45,7 @@ const RiderDashboard = () => {
       }
     };
     fetchRequests();
-    const interval = setInterval(fetchRequests, 5000);
+    const interval = setInterval(fetchRequests, 2500);
     return () => clearInterval(interval);
   }, [navigate]);
 
@@ -241,75 +242,31 @@ const RiderDashboard = () => {
         
         {/* Active Journey View */}
         {activeRequest ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100">
-                <div className={`h-full ${activeRequest.status === 'PENDING' ? 'bg-yellow-400 w-1/3' : activeRequest.status === 'ACCEPTED' ? 'bg-black w-2/3' : 'bg-green-500 w-full'} transition-all duration-1000`}></div>
-              </div>
-
-              {activeRequest.status === 'PENDING' && (
+          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-3xl mx-auto">
+            {activeRequest.status === 'PENDING' ? (
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-yellow-400"></div>
                 <div className="py-10">
                   <div className="inline-flex h-24 w-24 rounded-full border-4 border-gray-100 items-center justify-center mb-6 border-t-black animate-spin"></div>
-                  <h2 className="text-3xl font-bold text-black mb-3">Connecting...</h2>
-                  <p className="text-gray-500 mb-10 max-w-sm mx-auto text-lg">Waiting for the charging provider to accept your request.</p>
-                  
-                  <button onClick={() => handleUpdateStatus('CANCELLED')} className="text-gray-500 hover:text-black font-bold flex items-center justify-center gap-2 mx-auto transition">
-                    <XCircle className="h-5 w-5" /> Cancel Request
-                  </button>
-                </div>
-              )}
-
-              {activeRequest.status === 'ACCEPTED' && (
-                <div className="py-6 text-left">
-                  <div className="flex justify-between items-start mb-10">
-                    <div>
-                      <div className="text-3xl font-bold text-black mb-2">Provider Ready</div>
-                      <p className="text-gray-500 text-lg">Reservation holds for {formatTime(timeLeft)}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-gray-500 text-sm mb-1 uppercase tracking-wider font-bold">Provider</div>
-                      <div className="font-bold text-xl text-black">{activeRequest.providerId?.name || 'Charging Station'}</div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-100 rounded-2xl p-6 flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-5">
-                      <div className="bg-white p-4 rounded-xl shadow-sm">
-                        <Navigation className="h-6 w-6 text-black" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-black text-xl">{(activeRequest.distance || 1.2).toFixed(1)} km away</div>
-                        <div className="text-gray-500 font-medium">Estimated arrival: ~5 mins</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => handleUpdateStatus('ARRIVED')}
-                    className="w-full bg-black text-white font-bold py-5 rounded-xl hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-xl"
-                  >
-                    I HAVE ARRIVED
-                  </button>
-                </div>
-              )}
-
-              {activeRequest.status === 'ARRIVED' && (
-                <div className="py-10">
-                  <div className="inline-flex h-24 w-24 bg-gray-100 text-black rounded-full items-center justify-center mb-6">
-                    <MapPin className="h-10 w-10" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-black mb-3">You've arrived</h2>
-                  <p className="text-gray-500 mb-10 max-w-sm mx-auto text-lg">
-                    Please plug in your vehicle. The provider will activate the charging session shortly.
+                  <h2 className="text-2xl sm:text-3xl font-black text-black mb-3">Connecting to Nearby Chargers...</h2>
+                  <p className="text-gray-500 mb-8 max-w-sm mx-auto text-sm sm:text-base">
+                    Dispatching request to {activeRequest.providerId?.name || 'Charging Station'}. Please wait a moment while they accept.
                   </p>
                   
-                  <div className="flex justify-center items-center gap-3 text-black font-bold text-lg">
-                    <div className="h-3 w-3 rounded-full bg-black animate-pulse"></div>
-                    Preparing Session...
-                  </div>
+                  <button 
+                    onClick={() => handleUpdateStatus('CANCELLED')} 
+                    className="text-gray-500 hover:text-red-600 font-bold flex items-center justify-center gap-2 mx-auto transition text-sm py-2 px-4 rounded-xl border border-gray-200 hover:border-red-200"
+                  >
+                    <XCircle className="h-4 w-4" /> Cancel Request
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <LiveBikerTracking 
+                request={activeRequest} 
+                onStatusChange={handleUpdateStatus} 
+              />
+            )}
           </motion.div>
         ) : (
           <>

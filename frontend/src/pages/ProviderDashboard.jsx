@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ProviderDashboard = () => {
   const { user, extraData, logout } = useContext(AuthContext);
   const [requests, setRequests] = useState([]);
+  const [activeSession, setActiveSession] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState('');
 
@@ -19,22 +20,41 @@ const ProviderDashboard = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRequests(res.data);
+
+        // Also check if an active session is in progress
+        const sessionRes = await axios.get(`${API_BASE_URL}/api/charging/active`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setActiveSession(sessionRes.data || null);
       } catch (error) {
         console.error(error);
       }
     };
     fetchRequests();
-    const interval = setInterval(fetchRequests, 10000);
+    const interval = setInterval(fetchRequests, 2500);
     return () => clearInterval(interval);
   }, []);
 
   const handleAction = async (id, action) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/api/requests/${id}/${action}`, {}, {
+      const res = await axios.put(`${API_BASE_URL}/api/requests/${id}/${action}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRequests(prev => prev.map(r => r._id === id ? { ...r, status: action === 'accept' ? 'ACCEPTED' : 'REJECTED' } : r));
+      const newStatus = action === 'accept' ? 'ON_THE_WAY' : 'REJECTED';
+      setRequests(prev => prev.map(r => r._id === id ? { ...r, status: newStatus } : r));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleMarkArrived = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/api/requests/${id}/status`, { status: 'ARRIVED' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRequests(prev => prev.map(r => r._id === id ? { ...r, status: 'ARRIVED' } : r));
     } catch (error) {
       console.error(error);
     }
@@ -173,6 +193,34 @@ const ProviderDashboard = () => {
           </div>
         </motion.div>
 
+        {/* Active Charging Session Banner */}
+        {activeSession && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md animate-pulse">
+                <Zap className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-base">Active Charging Session in Progress</h4>
+                <p className="text-xs text-emerald-100">
+                  Charging for {activeSession.riderId?.name || 'Rider'} • Battery at {activeSession.currentBatteryPercentage}%
+                </p>
+              </div>
+            </div>
+            <a
+              href={`/session/${activeSession._id}`}
+              className="inline-flex items-center gap-2 bg-white text-emerald-800 font-bold px-5 py-2.5 rounded-xl text-xs shadow-md hover:bg-emerald-50 transition"
+            >
+              <span>Open Live Telemetry</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </motion.div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Charging Requests</h2>
           {requests.length > 0 && (
@@ -211,10 +259,11 @@ const ProviderDashboard = () => {
                         <span className="font-bold text-lg text-slate-900 block">{request.riderId?.name || 'Rider'}</span>
                         <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold mt-1 ${
                           request.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                          request.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' :
+                          request.status === 'ON_THE_WAY' || request.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700 animate-pulse' :
+                          request.status === 'ARRIVED' ? 'bg-emerald-100 text-emerald-700' :
                           'bg-slate-100 text-slate-700'
                         }`}>
-                          {request.status}
+                          {request.status === 'ON_THE_WAY' ? 'BIKER DISPATCHED' : request.status}
                         </span>
                       </div>
                     </div>
@@ -235,20 +284,49 @@ const ProviderDashboard = () => {
                   </div>
                   
                   {request.status === 'PENDING' && (
-                    <div className="flex gap-3 w-full md:w-auto">
-                      <button onClick={() => handleAction(request._id, 'reject')} className="flex-1 md:flex-none bg-white border-2 border-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-semibold hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center gap-2">
+                    <div className="flex gap-2.5 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleAction(request._id, 'reject')} 
+                        className="flex-1 md:flex-none bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition"
+                      >
                         Decline
                       </button>
-                      <button onClick={() => handleAction(request._id, 'accept')} className="flex-1 md:flex-none bg-slate-900 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-sm">
-                        Accept
+                      <button 
+                        onClick={() => handleAction(request._id, 'accept')} 
+                        className="flex-1 md:flex-none bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md"
+                      >
+                        <Zap className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>Accept & Dispatch Biker</span>
                       </button>
                     </div>
                   )}
                   
-                  {request.status === 'ACCEPTED' && (
-                    <button onClick={() => handleStartSession(request)} className="w-full md:w-auto bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-200">
-                      <Zap className="h-5 w-5" /> Start Session
+                  {(request.status === 'ON_THE_WAY' || request.status === 'ACCEPTED') && (
+                    <div className="flex gap-2.5 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleMarkArrived(request._id)} 
+                        className="flex-1 md:flex-none bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>Mark Arrived at Vehicle</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {request.status === 'ARRIVED' && (
+                    <button 
+                      onClick={() => handleStartSession(request)} 
+                      className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 animate-pulse"
+                    >
+                      <Zap className="h-4 w-4" />
+                      <span>Plug In & Start Charging</span>
                     </button>
+                  )}
+
+                  {request.status === 'CHARGING' && (
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                      ⚡ Charging Session Active
+                    </span>
                   )}
                 </motion.div>
               ))}
