@@ -10,6 +10,7 @@ import ChargingSession from './pages/ChargingSession';
 
 import RegisterRider from './pages/RegisterRider';
 import RegisterProvider from './pages/RegisterProvider';
+import HowToUse from './pages/HowToUse';
 
 function App() {
   const { user, loading } = useContext(AuthContext);
@@ -22,6 +23,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/how-to-use" element={<HowToUse />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'} />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={!user ? <RegisterRider /> : <Navigate to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'} />} />

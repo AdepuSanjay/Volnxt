@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
+import HowToUseModal from '../components/HowToUseModal';
 
 // Resilient Video / Image Media Component
 const VideoPlayerCard = ({ 
@@ -466,9 +467,9 @@ const Home = () => {
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white overflow-x-hidden">
       
       {/* Modern Sticky Navigation */}
-      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/85 border-b border-gray-100 transition-all">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-4 sm:gap-6">
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-gray-100 transition-all">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-6">
             <Link to="/" className="text-xl font-black tracking-tight text-black">
               VOLNXT
             </Link>
@@ -476,9 +477,9 @@ const Home = () => {
             <button
               type="button"
               onClick={() => setShowHowToUse(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200/90 px-3.5 py-1.5 rounded-full transition shadow-sm border border-gray-200/60"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200/90 px-2.5 sm:px-3.5 py-1.5 rounded-full transition shadow-sm border border-gray-200/60"
             >
-              <HelpCircle className="h-3.5 w-3.5 text-emerald-600" />
+              <HelpCircle className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
               <span>How to Use</span>
             </button>
           </div>
@@ -846,7 +847,7 @@ const Home = () => {
               <ul className="space-y-2.5 text-xs text-gray-600 font-medium">
                 <li><Link to="/register" className="hover:text-black">Request a Charge</Link></li>
                 <li><Link to="/login" className="hover:text-black">Rider Sign In</Link></li>
-                <li><a href="#how-it-works" className="hover:text-black">How It Works</a></li>
+                <li><Link to="/how-to-use" className="hover:text-black text-emerald-600 font-bold">How to Use (తెలుగు / हिन्दी / English)</Link></li>
                 <li><a href="#how-it-works" className="hover:text-black">Supported EV Models</a></li>
               </ul>
             </div>
@@ -885,290 +886,13 @@ const Home = () => {
         </div>
       </footer>
 
-      {/* Interactive "How to Use" Modal for Rider and Provider */}
-      <AnimatePresence>
-        {showHowToUse && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowHowToUse(false)}
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
-            />
-
-            {/* Modal Dialog Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-10 my-6 flex flex-col max-h-[92vh] text-left"
-            >
-              {/* Header */}
-              <div className="p-6 pb-4 border-b border-gray-100 flex items-start justify-between bg-gradient-to-b from-gray-50/90 to-white">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-200 mb-2">
-                    <HelpCircle className="h-3.5 w-3.5 text-emerald-600" />
-                    Operational Guide
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-black">
-                    How to Use VOLNXT
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                    Everything you need to know about requesting on-demand charging or monetizing your station as a host.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowHowToUse(false)}
-                  className="p-2 text-gray-400 hover:text-black rounded-full hover:bg-gray-100 transition"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Role Switcher Tabs */}
-              <div className="px-6 pt-4 bg-white">
-                <div className="flex bg-gray-100 p-1.5 rounded-2xl gap-1.5 border border-gray-200/80">
-                  <button
-                    type="button"
-                    onClick={() => setHowToUseTab('RIDER')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
-                      howToUseTab === 'RIDER'
-                        ? 'bg-black text-white shadow-md'
-                        : 'text-gray-600 hover:text-black hover:bg-gray-200/60'
-                    }`}
-                  >
-                    <Car className="h-4 w-4" />
-                    <span>For EV Riders (Get a Charge)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setHowToUseTab('PROVIDER')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
-                      howToUseTab === 'PROVIDER'
-                        ? 'bg-black text-white shadow-md'
-                        : 'text-gray-600 hover:text-black hover:bg-gray-200/60'
-                    }`}
-                  >
-                    <Zap className="h-4 w-4 text-emerald-400" />
-                    <span>For Host Providers (Host & Earn)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Content Body */}
-              <div className="p-6 overflow-y-auto space-y-5 flex-1">
-                {howToUseTab === 'RIDER' ? (
-                  /* RIDER WORKFLOW INSTRUCTIONS */
-                  <div className="space-y-4">
-                    <div className="bg-emerald-50/70 border border-emerald-200/80 p-4 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-emerald-600 text-white rounded-xl">
-                          <Car className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-black">EV Rider Roadmap</h4>
-                          <p className="text-xs text-gray-600">Get on-demand mobile EV charging in 5 straightforward steps.</p>
-                        </div>
-                      </div>
-                      <span className="hidden sm:inline-block text-[11px] font-bold text-emerald-700 bg-white px-3 py-1 rounded-full border border-emerald-200 shadow-sm">
-                        Zero Range Anxiety
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      
-                      {/* Step 1 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">1</span>
-                          <h5 className="font-bold text-sm text-black">Sign Up & Set Vehicle Specs</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Register your account with your phone & email. Select your EV make, model, battery capacity (kWh), and connector standard (Type 2, CCS, or CHAdeMO).
-                        </p>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">2</span>
-                          <h5 className="font-bold text-sm text-black">1-Tap GPS Location Detection</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Open your Rider Dashboard and hit <strong>"Request a Charge"</strong>. Device GPS locks your car coordinates with sub-meter accuracy so help comes right to your spot.
-                        </p>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">3</span>
-                          <h5 className="font-bold text-sm text-black">Proximity Smart Matching</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          VOLNXT instantly searches nearby mobile charger vans & community hosts within 10 km to 100 km. Review live distance, pricing per kWh, and estimated arrival times.
-                        </p>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">4</span>
-                          <h5 className="font-bold text-sm text-black">Certified High-Speed Plug-In</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          A mobile van arrives or you pull up to the host station. Plug in the certified CCS or Type 2 connector. Our system transfers high-output power (up to 50 kW DC Fast).
-                        </p>
-                      </div>
-
-                      {/* Step 5 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition md:col-span-2">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">5</span>
-                          <h5 className="font-bold text-sm text-black">Real-Time Telemetry & Cashless Auto-Pay</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Monitor live battery percentage surge and power delivery (+kWh) directly on your screen. Once your vehicle is charged, payment is automatically processed with fixed upfront rates.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Pro Tips */}
-                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-600 space-y-1.5">
-                      <div className="font-bold text-black flex items-center gap-1.5">
-                        <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                        <span>Rider Pro Tips:</span>
-                      </div>
-                      <p>• Keep GPS location permissions enabled on your device for accurate dispatch.</p>
-                      <p>• You can adjust the proximity search radius (10, 25, 50, 100 km) on your Rider Dashboard.</p>
-                      <p>• Compatible with all popular EV models in India including Tata Nexon EV, MG ZS EV, Ather, and Mahindra.</p>
-                    </div>
-                  </div>
-                ) : (
-                  /* PROVIDER WORKFLOW INSTRUCTIONS */
-                  <div className="space-y-4">
-                    <div className="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-black text-white rounded-xl">
-                          <Zap className="h-5 w-5 text-emerald-400" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-black">Host Provider Roadmap</h4>
-                          <p className="text-xs text-gray-600">Turn your home wallbox, parking socket, or mobile unit into passive monthly revenue.</p>
-                        </div>
-                      </div>
-                      <span className="hidden sm:inline-block text-[11px] font-bold text-amber-800 bg-white px-3 py-1 rounded-full border border-amber-200 shadow-sm">
-                        Passive Income
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      
-                      {/* Step 1 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">1</span>
-                          <h5 className="font-bold text-sm text-black">Register as Provider Partner</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Sign up with your personal contact info. Select whether you're an <strong>Individual Homeowner</strong> or a <strong>Commercial Business / Charging Station</strong>.
-                        </p>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">2</span>
-                          <h5 className="font-bold text-sm text-black">Pin Your Station Location</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Tap <strong>"Detect My Station Location"</strong> to automatically record your GPS coordinates. Enter your street address and landmarks so visiting riders can navigate easily.
-                        </p>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">3</span>
-                          <h5 className="font-bold text-sm text-black">Configure Hardware & Tariffs</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Select your connector standard (CCS, Type 2, 15A Socket), max charging power (kW), and pricing model (e.g. ₹15 / kWh or flat session fee). Set your operating hours.
-                        </p>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-black text-white text-xs font-black flex items-center justify-center">4</span>
-                          <h5 className="font-bold text-sm text-black">Go Online & Receive Requests</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Toggle your station to <strong>"Online"</strong>. Your location will appear on the dispatch map for nearby drivers searching for power within your proximity.
-                        </p>
-                      </div>
-
-                      {/* Step 5 */}
-                      <div className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 transition md:col-span-2">
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <span className="h-6 w-6 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">5</span>
-                          <h5 className="font-bold text-sm text-black">Host Charging & Instant Payouts</h5>
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Plug into visiting EVs safely. When the session finishes, VOLNXT automatically tallies the power consumed and deposits the payout directly to your bank account.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Pro Tips */}
-                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-600 space-y-1.5">
-                      <div className="font-bold text-black flex items-center gap-1.5">
-                        <DollarSign className="h-4 w-4 text-emerald-600" />
-                        <span>Host Provider Pro Tips:</span>
-                      </div>
-                      <p>• Setting competitive per-kWh rates (e.g. ₹14 - ₹18 / kWh) drives regular, repeating EV riders.</p>
-                      <p>• You retain 100% control over your hours and can pause incoming requests with one click.</p>
-                      <p>• Complete host safety declaration ensures your equipment adheres to electrical safety standards.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer CTA */}
-              <div className="p-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
-                <div className="text-xs text-gray-500 font-medium">
-                  {howToUseTab === 'RIDER' 
-                    ? "Ready to request high-speed on-demand charging?" 
-                    : "Ready to monetize your charging setup and start earning?"}
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => setShowHowToUse(false)}
-                    className="px-4 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-100 transition"
-                  >
-                    Close
-                  </button>
-
-                  <Link
-                    to={howToUseTab === 'RIDER' ? getChargeLink : provideChargeLink}
-                    onClick={() => setShowHowToUse(false)}
-                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-black hover:bg-gray-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition"
-                  >
-                    <span>{howToUseTab === 'RIDER' ? "Get a Charge" : "Register as Host"}</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Interactive Multilingual "How to Use" Modal */}
+      <HowToUseModal
+        isOpen={showHowToUse}
+        onClose={() => setShowHowToUse(false)}
+        defaultTab={howToUseTab}
+        user={user}
+      />
     </div>
   );
 };

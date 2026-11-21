@@ -110,9 +110,17 @@ const RegisterRider = () => {
             <Link to="/" className="text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
               VOLNXT
             </Link>
-            <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-full">
-              Rider Account
-            </span>
+            <div className="flex items-center gap-2">
+              <Link 
+                to="/how-to-use" 
+                className="text-xs font-bold text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full transition"
+              >
+                How to Use
+              </Link>
+              <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-full">
+                Rider Account
+              </span>
+            </div>
           </div>
 
           <div className="max-w-md mx-auto lg:mx-0">

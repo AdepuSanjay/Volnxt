@@ -37,12 +37,20 @@ const Login = () => {
             <Link to="/" className="text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
               VOLNXT
             </Link>
-            <Link 
-              to="/" 
-              className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-black transition"
-            >
-              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Home
-            </Link>
+            <div className="flex items-center gap-2.5">
+              <Link 
+                to="/how-to-use" 
+                className="inline-flex items-center text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition"
+              >
+                How to Use
+              </Link>
+              <Link 
+                to="/" 
+                className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-black transition"
+              >
+                <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Home
+              </Link>
+            </div>
           </div>
 
           {/* Form Header */}
