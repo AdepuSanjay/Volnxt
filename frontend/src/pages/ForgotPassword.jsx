@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { ArrowLeft, ArrowRight, Mail, KeyRound, Lock, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -28,7 +29,7 @@ const ForgotPassword = () => {
     setMessage('');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
       setMessage(res.data.message || 'Verification code dispatched to your Gmail');
       if (res.data.devOtp) {
         setDevOtp(res.data.devOtp);
@@ -48,7 +49,7 @@ const ForgotPassword = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
       setMessage('A new verification code has been dispatched to your Gmail.');
       if (res.data.devOtp) {
         setDevOtp(res.data.devOtp);
@@ -98,7 +99,7 @@ const ForgotPassword = () => {
     setError('');
 
     try {
-      await axios.post('http://localhost:5000/api/auth/reset-password', {
+      await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
         email,
         otp: otp.trim(),
         newPassword

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { AuthContext } from '../context/AuthContext';
 import { Battery, BatteryCharging, Zap, MapPin, CheckCircle, Clock, Star, Download, IndianRupee } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +22,7 @@ const ChargingSession = () => {
     const fetchSession = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5000/api/charging/${id}`, {
+        const res = await axios.get(`${API_BASE_URL}/api/charging/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSession(res.data);
@@ -40,7 +41,7 @@ const ChargingSession = () => {
     if (!newBattery) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/charging/${id}/update-battery`, { percentage: Number(newBattery) }, {
+      await axios.put(`${API_BASE_URL}/api/charging/${id}/update-battery`, { percentage: Number(newBattery) }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNewBattery('');
@@ -52,7 +53,7 @@ const ChargingSession = () => {
   const handleEndSession = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/charging/${id}/end`, { endBatteryPercentage: session.currentBatteryPercentage }, {
+      await axios.put(`${API_BASE_URL}/api/charging/${id}/end`, { endBatteryPercentage: session.currentBatteryPercentage }, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {

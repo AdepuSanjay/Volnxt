@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { Zap, Clock, CheckCircle, XCircle, LogOut, Image as ImageIcon, Wallet, Activity, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,7 +15,7 @@ const ProviderDashboard = () => {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/requests/provider', {
+        const res = await axios.get(`${API_BASE_URL}/api/requests/provider`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRequests(res.data);
@@ -30,7 +31,7 @@ const ProviderDashboard = () => {
   const handleAction = async (id, action) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/requests/${id}/${action}`, {}, {
+      await axios.put(`${API_BASE_URL}/api/requests/${id}/${action}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRequests(prev => prev.map(r => r._id === id ? { ...r, status: action === 'accept' ? 'ACCEPTED' : 'REJECTED' } : r));
@@ -42,7 +43,7 @@ const ProviderDashboard = () => {
   const handleStartSession = async (request) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/charging/start', {
+      const res = await axios.post(`${API_BASE_URL}/api/charging/start`, {
         requestId: request._id,
         startBatteryPercentage: request.batteryStart,
         targetBatteryPercentage: request.targetBattery,
@@ -69,7 +70,7 @@ const ProviderDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/providers/upload', formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/providers/upload`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

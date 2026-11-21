@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { ArrowRight, ArrowLeft, Upload, Zap, ShieldCheck, Car, CheckCircle2, Navigation, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -67,7 +68,7 @@ const RegisterRider = () => {
     setError('');
     
     try {
-      await axios.post('http://localhost:5000/api/auth/register', {
+      await axios.post(`${API_BASE_URL}/api/auth/register`, {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,

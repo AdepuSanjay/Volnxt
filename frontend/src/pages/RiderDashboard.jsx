@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config/api';
 import { Battery, Zap, MapPin, Clock, LogOut, CheckCircle, Car, Search, Navigation, AlertCircle, XCircle, Phone, Mail, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,14 +28,14 @@ const RiderDashboard = () => {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
-        const reqRes = await axios.get('http://localhost:5000/api/requests/my', { headers: { Authorization: `Bearer ${token}` } });
+        const reqRes = await axios.get(`${API_BASE_URL}/api/requests/my`, { headers: { Authorization: `Bearer ${token}` } });
         const requests = reqRes.data;
         setMyRequests(requests);
         
         const active = requests.find(r => ['PENDING', 'ACCEPTED', 'ARRIVED'].includes(r.status));
         setActiveRequest(active || null);
 
-        const sessionRes = await axios.get('http://localhost:5000/api/charging/active', { headers: { Authorization: `Bearer ${token}` } });
+        const sessionRes = await axios.get(`${API_BASE_URL}/api/charging/active`, { headers: { Authorization: `Bearer ${token}` } });
         if (sessionRes.data) {
           navigate(`/session/${sessionRes.data._id}`);
         }
@@ -107,8 +108,8 @@ const RiderDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const url = (lat && lng) 
-        ? `http://localhost:5000/api/providers/nearby?lat=${lat}&lng=${lng}&radius=${radius}` 
-        : `http://localhost:5000/api/providers/nearby?radius=${radius}`;
+        ? `${API_BASE_URL}/api/providers/nearby?lat=${lat}&lng=${lng}&radius=${radius}` 
+        : `${API_BASE_URL}/api/providers/nearby?radius=${radius}`;
       const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
       setProviders(res.data);
     } catch (error) {
@@ -159,7 +160,7 @@ const RiderDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/requests', {
+      await axios.post(`${API_BASE_URL}/api/requests`, {
         providerId: providerUserId,
         batteryStart: battery,
         targetBattery: 80,
@@ -173,7 +174,7 @@ const RiderDashboard = () => {
       setConfirmingRequest(false);
       setSelectedProvider(null);
       
-      const reqRes = await axios.get('http://localhost:5000/api/requests/my', { headers: { Authorization: `Bearer ${token}` } });
+      const reqRes = await axios.get(`${API_BASE_URL}/api/requests/my`, { headers: { Authorization: `Bearer ${token}` } });
       setMyRequests(reqRes.data);
       const active = reqRes.data.find(r => ['PENDING', 'ACCEPTED', 'ARRIVED'].includes(r.status));
       setActiveRequest(active || null);
@@ -189,7 +190,7 @@ const RiderDashboard = () => {
     if (!activeRequest) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/requests/${activeRequest._id}/status`, { status }, {
+      await axios.put(`${API_BASE_URL}/api/requests/${activeRequest._id}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setActiveRequest({ ...activeRequest, status });

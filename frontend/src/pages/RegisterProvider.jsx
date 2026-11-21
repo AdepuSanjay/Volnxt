@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 import { ArrowRight, ArrowLeft, MapPin, Zap, CheckCircle2, ShieldCheck, Navigation, AlertCircle, DollarSign, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -143,7 +144,7 @@ const RegisterProvider = () => {
     setError('');
 
     try {
-      await axios.post('http://localhost:5000/api/auth/register', {
+      await axios.post(`${API_BASE_URL}/api/auth/register`, {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
