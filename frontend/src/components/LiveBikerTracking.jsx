@@ -16,6 +16,7 @@ import {
   Compass
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LiveVehicleMap from './LiveVehicleMap';
 
 const LiveBikerTracking = ({ request, onStatusChange }) => {
   const [distanceKm, setDistanceKm] = useState(() => {
@@ -126,70 +127,41 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
         </div>
       </div>
 
-      {/* Live Route Graphic Simulator */}
-      <div className="p-5 sm:p-6 bg-slate-50 border-b border-gray-100">
-        <div className="relative bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm overflow-hidden">
-          
-          {/* Street & Route Line Graphic */}
-          <div className="flex items-center justify-between mb-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5 text-black">
-              <Zap className="h-4 w-4 text-emerald-600" />
-              Mobile Charging Unit
-            </span>
-            <span className="flex items-center gap-1.5 text-black">
-              <Car className="h-4 w-4 text-blue-600" />
-              Your EV Coordinates
-            </span>
-          </div>
+      {/* Live Interactive Ola/Rapido Street Map */}
+      <div className="p-4 sm:p-6 bg-slate-50 border-b border-gray-100">
+        <LiveVehicleMap 
+          riderLat={request.riderLat || 12.9716}
+          riderLng={request.riderLng || 77.5946}
+          riderAddress={request.riderAddress || "Your EV Pickup Point"}
+          providerLat={request.currentLat || 12.9866}
+          providerLng={request.currentLng || 77.6096}
+          providerName={bikerName}
+          distanceKm={distanceKm}
+          etaMinutes={etaMinutes}
+          status={hasArrived ? 'ARRIVED' : request.status}
+          role="RIDER"
+          height="h-[340px] sm:h-[400px]"
+        />
 
-          {/* Interactive Route Track */}
-          <div className="relative h-14 bg-gray-100 rounded-xl overflow-hidden flex items-center px-4 border border-gray-200">
-            {/* Road Grid Line */}
-            <div className="absolute inset-x-0 h-1 bg-gray-300 border-dashed border-t border-gray-400" />
-            
-            {/* Traveled Green Line */}
-            <div 
-              className="absolute left-0 h-1.5 bg-emerald-500 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-              style={{ width: `${progressPercent}%` }}
-            />
-
-            {/* Biker / Mobile Charger Marker */}
-            <motion.div 
-              className="absolute z-20 flex flex-col items-center"
-              style={{ left: `calc(${progressPercent}% - 20px)` }}
-              transition={{ type: "spring", stiffness: 80, damping: 15 }}
-            >
-              <div className="h-10 w-10 bg-black text-white rounded-full flex items-center justify-center shadow-lg border-2 border-emerald-400">
-                <Navigation className="h-5 w-5 text-emerald-400 transform rotate-45 animate-pulse" />
-              </div>
-            </motion.div>
-
-            {/* Destination Target Marker (Rider's EV) */}
-            <div className="absolute right-3 z-10 flex items-center justify-center h-9 w-9 bg-emerald-600 text-white rounded-full shadow-md border-2 border-white">
-              <MapPin className="h-4 w-4" />
+        {/* Live Dynamic Distance & ETA Meters */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1.5">
+              <Navigation className="h-3.5 w-3.5 text-emerald-600" />
+              Remaining Distance
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-black mt-1">
+              {hasArrived ? "0.0 km" : `${distanceKm.toFixed(1)} km`}
             </div>
           </div>
 
-          {/* Live Dynamic Distance & ETA Meters */}
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-gray-200">
-              <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                <Navigation className="h-3 w-3 text-emerald-600" />
-                Remaining Distance
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-black mt-1">
-                {hasArrived ? "0.0 km" : `${distanceKm.toFixed(1)} km`}
-              </div>
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm">
+            <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-cyan-600" />
+              Live Arrival ETA
             </div>
-
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-gray-200">
-              <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                <Clock className="h-3 w-3 text-blue-600" />
-                Live Arrival ETA
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">
-                {hasArrived ? "Arrived!" : `~${etaMinutes} mins`}
-              </div>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">
+              {hasArrived ? "Arrived!" : `~${etaMinutes} mins`}
             </div>
           </div>
         </div>

@@ -22,7 +22,8 @@ const chargingRequestSchema = new mongoose.Schema({
   currentLat: { type: Number },
   currentLng: { type: Number },
   riderLat: { type: Number },
-  riderLng: { type: Number }
+  riderLng: { type: Number },
+  riderAddress: { type: String, default: 'Current GPS Location' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('ChargingRequest', chargingRequestSchema);

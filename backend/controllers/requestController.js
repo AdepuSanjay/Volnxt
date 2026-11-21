@@ -10,7 +10,8 @@ const createRequest = async (req, res) => {
       estimatedTime, 
       distance,
       riderLat,
-      riderLng 
+      riderLng,
+      riderAddress 
     } = req.body;
     
     const initialDistance = Number(distance) || 2.4;
@@ -28,6 +29,7 @@ const createRequest = async (req, res) => {
       etaMinutes: initialEta,
       riderLat: riderLat || 12.9716,
       riderLng: riderLng || 77.5946,
+      riderAddress: riderAddress || 'Current GPS Location',
       currentLat: riderLat ? (Number(riderLat) + 0.015) : 12.9866,
       currentLng: riderLng ? (Number(riderLng) + 0.015) : 77.6096,
       status: 'PENDING'

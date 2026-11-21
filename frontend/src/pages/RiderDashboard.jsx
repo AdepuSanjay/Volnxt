@@ -17,15 +17,31 @@ const RiderDashboard = () => {
   const [activeRequest, setActiveRequest] = useState(null);
   const [timeLeft, setTimeLeft] = useState(600); 
   
-  const [locationStatus, setLocationStatus] = useState('IDLE'); 
-  const [location, setLocation] = useState(null);
-  const [locationAddress, setLocationAddress] = useState('');
+  const POPULAR_LOCATIONS = [
+    { name: "Koramangala 4th Block, Bengaluru", lat: 12.9352, lng: 77.6245 },
+    { name: "Indiranagar 100ft Road, Bengaluru", lat: 12.9784, lng: 77.6408 },
+    { name: "Whitefield ITPL Main Rd, Bengaluru", lat: 12.9863, lng: 77.7337 },
+    { name: "Hitec City Cyber Towers, Hyderabad", lat: 17.4504, lng: 78.3808 },
+    { name: "Gachibowli Outer Ring Rd, Hyderabad", lat: 17.4401, lng: 78.3489 },
+    { name: "Bandra Kurla Complex (BKC), Mumbai", lat: 19.0657, lng: 72.8687 },
+    { name: "Connaught Place Inner Circle, Delhi", lat: 28.6315, lng: 77.2167 },
+    { name: "Cyber Hub, DLF Phase 2, Gurugram", lat: 28.4986, lng: 77.0878 }
+  ];
+
+  const [locationStatus, setLocationStatus] = useState('GRANTED'); 
+  const [location, setLocation] = useState({ lat: 12.9716, lng: 77.5946 });
+  const [locationAddress, setLocationAddress] = useState('Koramangala 4th Block, Bengaluru (Live GPS)');
+  const [locationInput, setLocationInput] = useState('');
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [confirmingRequest, setConfirmingRequest] = useState(false);
   const [requestingId, setRequestingId] = useState(null);
   const [maxRadius, setMaxRadius] = useState(50); // in km
 
   useEffect(() => {
+    // Initial fetch of providers around default location
+    fetchProviders(12.9716, 77.5946, 50);
+
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -167,7 +183,10 @@ const RiderDashboard = () => {
         targetBattery: 80,
         estimatedPrice: est.total,
         estimatedTime: 35,
-        distance: selectedProvider.distance || 1.2
+        distance: selectedProvider.distance || 1.2,
+        riderLat: location?.lat || 12.9716,
+        riderLng: location?.lng || 77.5946,
+        riderAddress: locationAddress || 'Current GPS Location'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -401,55 +420,117 @@ const RiderDashboard = () => {
             {!confirmingRequest && locationStatus !== 'IDLE' && (
               <div className="mt-6">
                 
-                {/* Location Bar & Radius Selector */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-black" />
-                      <span className="text-sm font-bold text-black">Your Search Location:</span>
-                      <span className="text-sm text-gray-600 font-medium">{locationAddress || 'Current Location'}</span>
+                {/* Ola / Rapido Style Live Location Entry & Range Selector Card */}
+                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-200 shadow-sm mb-8 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200 flex-shrink-0">
+                        <MapPin className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pickup & EV Parking Spot</div>
+                        <div className="text-sm sm:text-base font-black text-black flex items-center gap-2">
+                          <span className="truncate max-w-[260px] sm:max-w-md">{locationAddress || 'Koramangala 4th Block, Bengaluru'}</span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+                            GPS Active
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                      <span>Presets:</span>
-                      <button 
-                        onClick={() => handleApplyPresetLocation(12.9716, 77.5946, 'Bengaluru Center')} 
-                        className="text-black font-bold hover:underline"
-                      >
-                        Bengaluru
-                      </button>
-                      <span>•</span>
-                      <button 
-                        onClick={() => handleApplyPresetLocation(19.0760, 72.8777, 'Mumbai')} 
-                        className="text-black font-bold hover:underline"
-                      >
-                        Mumbai
-                      </button>
-                      <span>•</span>
-                      <button 
-                        onClick={() => handleApplyPresetLocation(28.6139, 77.2090, 'Delhi')} 
-                        className="text-black font-bold hover:underline"
-                      >
-                        Delhi
-                      </button>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleFindNearby()}
+                      className="inline-flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm self-start sm:self-auto"
+                    >
+                      <Compass className="h-4 w-4 text-emerald-600 animate-spin" />
+                      <span>Lock Live GPS</span>
+                    </button>
                   </div>
 
-                  {/* Radius buttons */}
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Radius:</span>
-                    {[10, 25, 50, 100].map(r => (
-                      <button
-                        key={r}
-                        onClick={() => handleRadiusChange(r)}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
-                          maxRadius === r 
-                            ? 'bg-black text-white' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {r} km
-                      </button>
-                    ))}
+                  {/* Ola/Rapido Style Location Search Input */}
+                  <div className="relative">
+                    <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 px-4 py-3 transition">
+                      <Search className="h-4 w-4 text-gray-400 mr-2.5 flex-shrink-0" />
+                      <input
+                        type="text"
+                        value={locationInput}
+                        onChange={(e) => {
+                          setLocationInput(e.target.value);
+                          setShowLocationSuggestions(true);
+                        }}
+                        onFocus={() => setShowLocationSuggestions(true)}
+                        placeholder="Search landmark, street, tech park or building..."
+                        className="w-full bg-transparent text-xs sm:text-sm font-semibold text-black focus:outline-none placeholder-gray-400"
+                      />
+                      {locationInput && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLocationInput('');
+                            setShowLocationSuggestions(false);
+                          }}
+                          className="text-gray-400 hover:text-black p-1"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Suggestions Dropdown */}
+                    {showLocationSuggestions && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-200 shadow-2xl z-30 max-h-64 overflow-y-auto divide-y divide-gray-100">
+                        <div className="p-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/90">
+                          Instant EV Hubs & City Landmarks
+                        </div>
+                        {POPULAR_LOCATIONS
+                          .filter(loc => !locationInput || loc.name.toLowerCase().includes(locationInput.toLowerCase()))
+                          .map((loc, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setLocationInput(loc.name);
+                                setLocationAddress(loc.name);
+                                setLocation({ lat: loc.lat, lng: loc.lng });
+                                setLocationStatus('GRANTED');
+                                setShowLocationSuggestions(false);
+                                fetchProviders(loc.lat, loc.lng, maxRadius);
+                              }}
+                              className="w-full px-4 py-3 text-left text-xs font-bold text-gray-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center justify-between transition"
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                                <span>{loc.name}</span>
+                              </span>
+                              <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded font-bold">Select</span>
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Range Radius Chips */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-gray-100">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Search Proximity Radius:
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {[10, 25, 50, 100].map(r => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => handleRadiusChange(r)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                            maxRadius === r
+                              ? 'bg-black text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-black'
+                          }`}
+                        >
+                          {r} km
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

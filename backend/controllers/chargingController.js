@@ -155,4 +155,54 @@ const getActiveSession = async (req, res) => {
   }
 };
 
-module.exports = { startSession, updateBattery, endSession, getSession, getActiveSession };
+const getProviderStats = async (req, res) => {
+  try {
+    const providerId = req.user._id;
+
+    // Find all completed sessions for this provider
+    const completedSessions = await ChargingSession.find({
+      providerId,
+      status: 'COMPLETED'
+    })
+      .populate('riderId', 'name email phone')
+      .populate('requestId')
+      .sort({ updatedAt: -1 });
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let totalEarnings = 0;
+    let todayEarnings = 0;
+    let todaySessionsCount = 0;
+    let totalEnergyKwh = 0;
+
+    completedSessions.forEach(session => {
+      const amount = Number(session.providerAmount !== undefined && session.providerAmount !== null 
+        ? session.providerAmount 
+        : (session.finalAmount || session.estimatedAmount || 0));
+      
+      totalEarnings += amount;
+      totalEnergyKwh += Number(session.energyDeliveredKwh || 0);
+
+      const sessionDate = new Date(session.endTime || session.updatedAt || session.createdAt);
+      if (sessionDate >= startOfToday) {
+        todayEarnings += amount;
+        todaySessionsCount += 1;
+      }
+    });
+
+    res.json({
+      totalEarnings: Math.round(totalEarnings),
+      todayEarnings: Math.round(todayEarnings),
+      totalSessionsCount: completedSessions.length,
+      todaySessionsCount,
+      totalEnergyKwh: Number(totalEnergyKwh.toFixed(1)),
+      recentSessions: completedSessions.slice(0, 20)
+    });
+  } catch (error) {
+    console.error('getProviderStats error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { startSession, updateBattery, endSession, getSession, getActiveSession, getProviderStats };
