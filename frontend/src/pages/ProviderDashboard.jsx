@@ -107,28 +107,30 @@ const ProviderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans">
-      <nav className="bg-white/70 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/60 px-6 py-4 flex justify-between items-center transition-all">
-        <div className="text-slate-900 font-bold text-xl tracking-tight">
+      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/60 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center transition-all">
+        <div className="text-slate-900 font-bold text-lg sm:text-xl tracking-tight">
           VOLNXT <span className="font-medium text-slate-500">Provider</span>
         </div>
-        <div className="flex items-center gap-5">
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold border border-slate-200 text-xs sm:text-sm">
               {extraData?.businessName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'P'}
             </div>
-            <span className="text-slate-700 font-medium text-sm">{extraData?.businessName || user?.name}</span>
+            <span className="text-slate-700 font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">
+              {extraData?.businessName || user?.name}
+            </span>
           </div>
-          <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">
-            <LogOut className="h-5 w-5" />
+          <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors p-1.5 sm:p-2 rounded-lg hover:bg-red-50">
+            <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10"
         >
           {/* Earnings */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 relative overflow-hidden group">

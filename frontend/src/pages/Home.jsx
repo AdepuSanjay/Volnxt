@@ -4,7 +4,7 @@ import {
   MapPin, BatteryCharging, ShieldCheck, ArrowRight, Zap, 
   Play, Pause, DollarSign, Clock, Navigation, Radio, Compass, Car,
   Smartphone, Star, CheckCircle2, ChevronRight, Activity, Gauge,
-  HelpCircle, X
+  HelpCircle, X, Menu, Globe, LogOut, Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
@@ -427,11 +427,12 @@ const WorkflowAnimationStage = ({ activeStep, isPlaying, onTogglePlay, onSelectS
 };
 
 const Home = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const [activeStep, setActiveStep] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [howToUseTab, setHowToUseTab] = useState('RIDER'); // 'RIDER' or 'PROVIDER'
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getChargeLink = user ? (user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard') : '/register';
   const provideChargeLink = user ? (user.role === 'PROVIDER' ? '/provider/dashboard' : '/rider/dashboard') : '/register-provider';
@@ -467,10 +468,10 @@ const Home = () => {
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white overflow-x-hidden">
       
       {/* Modern Sticky Navigation */}
-      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-gray-100 transition-all">
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-gray-100 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-6">
-            <Link to="/" className="text-xl font-black tracking-tight text-black">
+            <Link to="/" className="text-xl sm:text-2xl font-black tracking-tight text-black">
               VOLNXT
             </Link>
 
@@ -484,14 +485,24 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Link 
-                to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'} 
-                className="bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-full font-bold transition text-xs shadow-md"
-              >
-                Dashboard ({user.name?.split(' ')[0]})
-              </Link>
+              <>
+                <Link 
+                  to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'} 
+                  className="bg-black hover:bg-gray-900 text-white px-4 py-2 rounded-full font-bold transition text-xs shadow-md"
+                >
+                  Dashboard ({user.name?.split(' ')[0]})
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-gray-500 hover:text-black text-xs font-semibold px-2 py-1 transition"
+                >
+                  Log out
+                </button>
+              </>
             ) : (
               <>
                 <Link to="/login" className="text-black font-semibold hover:text-gray-600 transition text-xs px-2.5 py-1.5">
@@ -499,7 +510,7 @@ const Home = () => {
                 </Link>
                 <Link 
                   to="/register-provider" 
-                  className="hidden sm:inline-flex items-center gap-1.5 border border-gray-300 hover:border-black text-black px-3.5 py-1.5 rounded-full font-bold transition text-xs"
+                  className="inline-flex items-center gap-1.5 border border-gray-300 hover:border-black text-black px-3.5 py-1.5 rounded-full font-bold transition text-xs"
                 >
                   <Zap className="h-3.5 w-3.5 text-emerald-600" /> Host Charger
                 </Link>
@@ -512,11 +523,150 @@ const Home = () => {
               </>
             )}
           </div>
+
+          {/* Mobile Right Controls: Hamburger Menu Button */}
+          <div className="flex md:hidden items-center gap-2">
+            {!user && (
+              <Link
+                to="/register"
+                className="bg-black text-white px-3 py-1.5 rounded-full font-bold text-xs shadow-sm"
+              >
+                Get Charge
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+              className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition border border-gray-200"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Slide-Down Menu Drawer */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-xl px-4 py-4 space-y-3 overflow-hidden text-left shadow-lg"
+            >
+              {user ? (
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-gray-400 font-semibold uppercase">Signed in as</div>
+                    <div className="text-sm font-bold text-black">{user.name} ({user.role})</div>
+                  </div>
+                  <Link
+                    to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
+                  >
+                    Dashboard
+                  </Link>
+                </div>
+              ) : null}
+
+              {/* Navigation Options List */}
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowHowToUse(true);
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition text-left"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <HelpCircle className="h-4 w-4 text-emerald-600" />
+                    <span>How to Use Guide</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                    తెలుగు / हिन्दी / EN
+                  </span>
+                </button>
+
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Car className="h-4 w-4 text-black" />
+                    <span>Get a Charge (Rider Sign Up)</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </Link>
+
+                <Link
+                  to="/register-provider"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Zap className="h-4 w-4 text-emerald-600" />
+                    <span>Host Charger & Earn (Provider Sign Up)</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </Link>
+
+                <Link
+                  to="/how-to-use"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Globe className="h-4 w-4 text-blue-600" />
+                    <span>Full Screen Documentation</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </Link>
+
+                {!user ? (
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 text-xs font-bold text-black transition"
+                  >
+                    <span>Log In to Your Account</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      <span>Log Out</span>
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* 24/7 Helpline */}
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-emerald-600" />
+                  24/7 Emergency Support
+                </span>
+                <span className="font-bold text-black">1800-VOLNXT</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-8 pb-16 md:pt-14 md:pb-24 max-w-7xl mx-auto px-6">
+      <section className="relative pt-8 pb-16 md:pt-14 md:pb-24 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           
           {/* Left Hero Content */}
@@ -580,26 +730,26 @@ const Home = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex items-center gap-6 pt-3 border-t border-gray-100"
+              className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-6 pt-3 border-t border-gray-100"
             >
               <div>
                 <div className="flex items-center gap-1 text-amber-500">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <Star key={i} className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-400 text-amber-400" />
                   ))}
-                  <span className="text-black font-extrabold text-xs ml-1">4.9 / 5</span>
+                  <span className="text-black font-extrabold text-[11px] sm:text-xs ml-0.5">4.9/5</span>
                 </div>
-                <div className="text-[11px] text-gray-500 font-medium mt-0.5">Verified Rider Ratings</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-500 font-medium mt-0.5">Verified Ratings</div>
               </div>
-              <div className="h-7 w-px bg-gray-200" />
+              <div className="hidden sm:block h-7 w-px bg-gray-200" />
               <div>
                 <div className="text-xs sm:text-sm font-extrabold text-black">&lt; 15 Mins</div>
-                <div className="text-[11px] text-gray-500 font-medium mt-0.5">Average Arrival</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-500 font-medium mt-0.5">Average Arrival</div>
               </div>
-              <div className="h-7 w-px bg-gray-200" />
+              <div className="hidden sm:block h-7 w-px bg-gray-200" />
               <div>
                 <div className="text-xs sm:text-sm font-extrabold text-black">100% Safe</div>
-                <div className="text-[11px] text-gray-500 font-medium mt-0.5">Certified & Tested Grid</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-500 font-medium mt-0.5">Certified Grid</div>
               </div>
             </motion.div>
           </div>
@@ -653,7 +803,7 @@ const Home = () => {
 
       {/* Trust & Stats Ribbon */}
       <section className="bg-neutral-900 text-white py-10 border-y border-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
           <div>
             <div className="text-2xl sm:text-3xl font-black text-white mb-1">15 min</div>
             <div className="text-xs text-gray-400 font-medium">Average Response Time</div>
@@ -674,7 +824,7 @@ const Home = () => {
       </section>
 
       {/* Section 2: How It Works & Live Interactive Workflow Animation */}
-      <section id="how-it-works" className="py-16 md:py-20 max-w-7xl mx-auto px-6">
+      <section id="how-it-works" className="py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             Effortless Mobility
@@ -770,7 +920,7 @@ const Home = () => {
 
       {/* Section 3: Provider Monetization */}
       <section id="providers" className="py-16 md:py-20 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
             {/* Visual Card: High-Definition Video or Image (No amount display) */}
@@ -828,7 +978,7 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 pt-16 pb-12 text-left">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div>
               <div className="text-2xl font-black text-black mb-4">

@@ -216,29 +216,29 @@ const RiderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <nav className="bg-white sticky top-0 z-50 border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2 text-black font-black text-2xl tracking-tighter">
+      <nav className="bg-white sticky top-0 z-50 border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2 text-black font-black text-xl sm:text-2xl tracking-tighter">
           VOLNXT
         </div>
-        <div className="flex items-center gap-5">
-          <div className="hidden sm:flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-black font-bold">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-100 flex items-center justify-center text-black font-bold text-xs sm:text-base">
               {user?.name?.[0]?.toUpperCase() || 'R'}
             </div>
             <div className="text-left">
-              <div className="text-sm font-bold text-black">{user?.name}</div>
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-xs sm:text-sm font-bold text-black">{user?.name}</div>
+              <div className="text-[10px] sm:text-xs text-gray-500 font-medium truncate max-w-[120px] sm:max-w-none">
                 {extraData?.brand} {extraData?.vehicleModel || 'EV Rider'}
               </div>
             </div>
           </div>
-          <button onClick={logout} className="text-gray-500 hover:text-black transition-colors font-medium text-sm">
+          <button onClick={logout} className="text-gray-500 hover:text-black transition-colors font-medium text-xs sm:text-sm px-2 py-1">
             Log out
           </button>
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         
         {/* Active Journey View */}
         {activeRequest ? (
@@ -271,9 +271,9 @@ const RiderDashboard = () => {
         ) : (
           <>
             {!confirmingRequest && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
                 {/* Vehicle & Battery Status */}
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                <div className="bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-gray-200 flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-gray-500 font-bold tracking-wider uppercase text-xs">Your EV Status</h3>
@@ -298,7 +298,7 @@ const RiderDashboard = () => {
                 </div>
                 
                 {/* Find Nearby Action */}
-                <div className="bg-black p-8 rounded-3xl shadow-sm border border-gray-900 flex flex-col justify-between text-white">
+                <div className="bg-black p-5 sm:p-8 rounded-3xl shadow-sm border border-gray-900 flex flex-col justify-between text-white">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-gray-400 font-bold tracking-wider uppercase text-xs">On-Demand Charging</h3>
@@ -435,7 +435,7 @@ const RiderDashboard = () => {
                   </div>
 
                   {/* Radius buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Radius:</span>
                     {[10, 25, 50, 100].map(r => (
                       <button

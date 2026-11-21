@@ -116,11 +116,11 @@ const ForgotPassword = () => {
     <div className="min-h-screen bg-[#fafbfc] flex flex-col lg:flex-row font-sans selection:bg-black selection:text-white">
       
       {/* Left Column: Flow Container */}
-      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-6 sm:p-10 lg:p-14 bg-white border-r border-gray-100 z-10">
+      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-4 sm:p-10 lg:p-14 bg-white border-r border-gray-100 z-10">
         <div>
           {/* Top Brand Header */}
-          <div className="flex items-center justify-between mb-8 sm:mb-12">
-            <Link to="/" className="text-2xl font-black tracking-tight text-black flex items-center gap-2">
+          <div className="flex items-center justify-between mb-6 sm:mb-12">
+            <Link to="/" className="text-xl sm:text-2xl font-black tracking-tight text-black flex items-center gap-2">
               VOLNXT
             </Link>
             <Link 

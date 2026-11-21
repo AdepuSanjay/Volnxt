@@ -30,23 +30,23 @@ const Login = () => {
     <div className="min-h-screen bg-white flex flex-col lg:flex-row font-sans selection:bg-black selection:text-white">
       
       {/* Left Column: Authentication Form */}
-      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10 bg-white">
+      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-4 sm:p-10 lg:p-14 z-10 bg-white">
         <div>
           {/* Brand Header */}
-          <div className="flex items-center justify-between mb-8 sm:mb-12">
-            <Link to="/" className="text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
+          <div className="flex items-center justify-between mb-6 sm:mb-12">
+            <Link to="/" className="text-xl sm:text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
               VOLNXT
             </Link>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
               <Link 
                 to="/how-to-use" 
-                className="inline-flex items-center text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition"
+                className="inline-flex items-center text-[11px] sm:text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition"
               >
                 How to Use
               </Link>
               <Link 
                 to="/" 
-                className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-black transition"
+                className="inline-flex items-center text-[11px] sm:text-xs font-semibold text-gray-500 hover:text-black transition px-1.5 py-1"
               >
                 <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Home
               </Link>

@@ -103,22 +103,22 @@ const RegisterRider = () => {
     <div className="min-h-screen bg-white flex flex-col lg:flex-row font-sans selection:bg-black selection:text-white">
       
       {/* Left Column: Multi-Step Registration Form */}
-      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10 bg-white overflow-y-auto">
+      <div className="w-full lg:w-1/2 xl:w-5/12 flex flex-col justify-between p-4 sm:p-10 lg:p-14 z-10 bg-white overflow-y-auto">
         <div>
           {/* Brand Header */}
           <div className="flex items-center justify-between mb-6">
-            <Link to="/" className="text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
+            <Link to="/" className="text-xl sm:text-2xl font-black tracking-tight text-black hover:opacity-80 transition">
               VOLNXT
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link 
                 to="/how-to-use" 
-                className="text-xs font-bold text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full transition"
+                className="text-[11px] sm:text-xs font-bold text-gray-600 hover:text-black bg-gray-100 hover:bg-gray-200 px-2 sm:px-2.5 py-1 rounded-full transition"
               >
                 How to Use
               </Link>
-              <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-full">
-                Rider Account
+              <span className="bg-black text-white text-[9px] sm:text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider rounded-full">
+                Rider
               </span>
             </div>
           </div>
@@ -227,7 +227,7 @@ const RegisterRider = () => {
                     <InputField label="Variant (Optional)" name="variant" required={false} placeholder="e.g. Max / Long Range" value={formData.variant} onChange={handleChange} />
                     <InputField label="Registration Number" name="registrationNumber" placeholder="e.g. MH 01 AB 1234" value={formData.registrationNumber} onChange={handleChange} />
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <InputField label="Battery Capacity (kWh)" name="batteryCapacity" type="number" placeholder="e.g. 40.5" value={formData.batteryCapacity} onChange={handleChange} />
                       <InputField label="Current Battery (%)" name="currentBatteryPercentage" type="number" max="100" placeholder="e.g. 24" value={formData.currentBatteryPercentage} onChange={handleChange} />
                     </div>
