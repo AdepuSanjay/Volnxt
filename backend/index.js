@@ -14,8 +14,12 @@ connectDB();
 const app = express();
 
 // Middleware
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  credentials: true
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 

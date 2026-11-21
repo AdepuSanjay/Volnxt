@@ -5,8 +5,10 @@ const ProviderProfile = require('../models/ProviderProfile');
 const Vehicle = require('../models/Vehicle');
 const { sendOtpEmail } = require('../utils/emailService');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'voltroutesecretkey123';
+
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 };
 
 const registerUser = async (req, res) => {

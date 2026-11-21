@@ -2,10 +2,10 @@ const nodemailer = require('nodemailer');
 
 // Configure Gmail SMTP Transporter with explicit host/port
 const createTransporter = () => {
-  const user = process.env.GMAIL_USER || process.env.EMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+  const user = process.env.GMAIL_USER || process.env.EMAIL_USER || 'chamakurinaveen11@gmail.com';
+  const pass = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || 'gxil ejyc gepm jlxa';
 
-  console.log(`[VOLNXT EMAIL] Configuring SMTP for user: ${user ? user : '(not set)'}`);
+  console.log(`[VOLNXT EMAIL] Configuring SMTP for user: ${user}`);
 
   if (user && pass) {
     // Strip spaces from app password (Google shows them grouped but they should be contiguous)
@@ -85,7 +85,7 @@ const sendOtpEmail = async (toEmail, otp, recipientName = 'VOLNXT Member') => {
 
   if (transporter) {
     try {
-      const senderEmail = process.env.GMAIL_USER || process.env.EMAIL_USER;
+      const senderEmail = process.env.GMAIL_USER || process.env.EMAIL_USER || 'chamakurinaveen11@gmail.com';
       const info = await transporter.sendMail({
         from: `"${brandName} Security" <${senderEmail}>`,
         to: toEmail,
