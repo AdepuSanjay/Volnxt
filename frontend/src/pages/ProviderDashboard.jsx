@@ -193,7 +193,7 @@ const ProviderDashboard = () => {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+      <main className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         
         {/* KPI Performance Metrics Dashboard (Ola / Uber Fleet Style) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -267,7 +267,7 @@ const ProviderDashboard = () => {
 
         {/* Section: Incoming & Active Charging Requests */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Active Dispatches & Requests</h2>
               <p className="text-xs text-slate-500">Manage real-time incoming rider requests and technician dispatches.</p>
@@ -308,13 +308,13 @@ const ProviderDashboard = () => {
                     >
                       {/* Top Request Status Header */}
                       <div className="p-5 sm:p-6 pb-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
+                        <div className="flex min-w-0 items-center gap-3.5">
                           <div className="h-12 w-12 rounded-2xl bg-black text-white flex items-center justify-center font-black text-base shadow-sm flex-shrink-0">
                             {riderName.charAt(0)}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-base font-black text-slate-900">{riderName}</h4>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="break-words text-base font-black text-slate-900">{riderName}</h4>
                               <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                                 request.status === 'PENDING' ? 'bg-amber-100 text-amber-800' :
                                 request.status === 'ON_THE_WAY' ? 'bg-cyan-100 text-cyan-800 animate-pulse' :
@@ -324,28 +324,28 @@ const ProviderDashboard = () => {
                                 {request.status === 'ON_THE_WAY' ? 'EN ROUTE TO RIDER' : request.status}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                               <span className="flex items-center gap-1">
                                 <Phone className="h-3 w-3 text-slate-400" />
-                                <a href={`tel:${riderPhone}`} className="hover:text-black font-semibold">{riderPhone}</a>
+                                <a href={`tel:${riderPhone}`} className="break-all font-semibold hover:text-black">{riderPhone}</a>
                               </span>
                               <span>•</span>
-                              <span className="flex items-center gap-1 font-semibold text-slate-700">
-                                <MapPin className="h-3 w-3 text-emerald-600" />
-                                {riderAddress}
+                              <span className="min-w-0 flex items-start gap-1 font-semibold text-slate-700">
+                                <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" />
+                                <span className="min-w-0 break-words">{riderAddress}</span>
                               </span>
                             </div>
                           </div>
                         </div>
 
                         {/* Battery, ETA & Payout Chips */}
-                        <div className="flex items-center gap-3 bg-slate-50 p-2.5 sm:px-4 rounded-2xl border border-slate-200 self-start md:self-auto">
-                          <div className="text-left">
+                        <div className="flex max-w-full flex-wrap items-center gap-3 bg-slate-50 p-2.5 sm:px-4 rounded-2xl border border-slate-200 self-start md:self-auto">
+                          <div className="min-w-0 text-left">
                             <div className="text-[10px] text-slate-400 font-bold uppercase">Battery Req.</div>
-                            <div className="text-xs font-black text-slate-800">{request.batteryStart}% → {request.targetBattery}%</div>
+                            <div className="break-words text-xs font-black text-slate-800">{request.batteryStart}% → {request.targetBattery}%</div>
                           </div>
                           <div className="h-6 w-px bg-slate-200" />
-                          <div className="text-left">
+                          <div className="min-w-0 text-left">
                             <div className="text-[10px] text-slate-400 font-bold uppercase">Estimated Payout</div>
                             <div className="text-sm font-black text-emerald-600">₹{request.estimatedPrice}</div>
                           </div>
@@ -375,14 +375,14 @@ const ProviderDashboard = () => {
 
                       {/* Bottom Actions Bar */}
                       <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
-                        <div className="text-xs text-slate-500 font-medium">
+                        <div className="min-w-0 break-words text-xs text-slate-500 font-medium">
                           {request.status === 'PENDING' && "Rider is waiting for confirmation. Accept to dispatch technician."}
                           {request.status === 'ON_THE_WAY' && "Mobile charger en route. Once parked at rider EV, mark arrived."}
                           {request.status === 'ARRIVED' && "Mobile charger at vehicle. Plug in connector to start metering."}
                           {request.status === 'CHARGING' && "Power flow active. Session metrics syncing with cloud ledger."}
                         </div>
 
-                        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2.5 sm:w-auto">
                           {request.status === 'PENDING' && (
                             <>
                               <button 
@@ -440,8 +440,8 @@ const ProviderDashboard = () => {
         {/* Section: Completed Charging Revenue Ledger (Real-time Payout Records) */}
         <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-            <div>
-              <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="flex flex-wrap items-center gap-2 text-lg font-black tracking-tight text-slate-900">
                 <span>Completed Sessions & Revenue Ledger</span>
                 <span className="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-0.5 rounded-full">
                   {stats.totalSessionsCount} Settled

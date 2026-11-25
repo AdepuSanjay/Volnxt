@@ -235,29 +235,29 @@ const RiderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <nav className="bg-white sticky top-0 z-50 border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+      <nav className="bg-white sticky top-0 z-50 border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-2">
         <div className="flex items-center gap-2 text-black font-black text-xl sm:text-2xl tracking-tighter">
           VOLNXT
         </div>
-        <div className="flex items-center gap-3 sm:gap-5">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-100 flex items-center justify-center text-black font-bold text-xs sm:text-base">
               {user?.name?.[0]?.toUpperCase() || 'R'}
             </div>
             <div className="text-left">
-              <div className="text-xs sm:text-sm font-bold text-black">{user?.name}</div>
+              <div className="max-w-[120px] truncate text-xs font-bold text-black sm:max-w-none sm:text-sm">{user?.name}</div>
               <div className="text-[10px] sm:text-xs text-gray-500 font-medium truncate max-w-[120px] sm:max-w-none">
                 {extraData?.brand} {extraData?.vehicleModel || 'EV Rider'}
               </div>
             </div>
           </div>
-          <button onClick={logout} className="text-gray-500 hover:text-black transition-colors font-medium text-xs sm:text-sm px-2 py-1">
+          <button onClick={logout} className="shrink-0 whitespace-nowrap text-gray-500 hover:text-black transition-colors font-medium text-xs sm:text-sm px-2 py-1">
             Log out
           </button>
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="mx-auto w-full min-w-0 max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
         
         {/* Active Journey View */}
         {activeRequest ? (
@@ -310,9 +310,9 @@ const RiderDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600 font-semibold">
-                    <span>Connector: <strong className="text-black">{extraData?.connectorType || 'CCS'}</strong></span>
-                    <span>Max: <strong className="text-black">{extraData?.maxChargingPower || 50} kW</strong></span>
+                  <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-gray-600 font-semibold">
+                    <span className="min-w-0 break-words">Connector: <strong className="text-black">{extraData?.connectorType || 'CCS'}</strong></span>
+                    <span className="min-w-0 break-words">Max: <strong className="text-black">{extraData?.maxChargingPower || 50} kW</strong></span>
                   </div>
                 </div>
                 
@@ -348,58 +348,58 @@ const RiderDashboard = () => {
                    ← Back to Providers
                 </button>
                 
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8">
-                  <h2 className="text-3xl font-bold text-black mb-2">Confirm Charging Request</h2>
+                <div className="min-w-0 bg-white rounded-3xl shadow-sm border border-gray-200 p-4 sm:p-8">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-black mb-2">Confirm Charging Request</h2>
                   <p className="text-sm text-gray-500 mb-6 font-medium">Review provider location and estimated charge cost.</p>
                   
                   <div className="bg-gray-50 p-6 rounded-2xl mb-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="text-2xl font-bold text-black">{selectedProvider.businessName}</div>
-                        <div className="text-xs text-gray-500 font-medium mt-1">Host: {selectedProvider.ownerName || selectedProvider.userId?.name}</div>
+                    <div className="flex min-w-0 flex-wrap justify-between items-start gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="break-words text-xl sm:text-2xl font-bold text-black">{selectedProvider.businessName}</div>
+                        <div className="break-words text-xs text-gray-500 font-medium mt-1">Host: {selectedProvider.ownerName || selectedProvider.userId?.name}</div>
                       </div>
-                      <div className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                      <div className="shrink-0 bg-black text-white text-xs font-bold px-3 py-1.5 rounded-full">
                         {selectedProvider.distance != null ? `${selectedProvider.distance.toFixed(1)} km away` : 'Nearby'}
                       </div>
                     </div>
 
                     <div className="text-sm text-gray-700 flex items-center gap-1.5 mt-2">
                       <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <span>{selectedProvider.address}</span>
+                      <span className="min-w-0 break-words">{selectedProvider.address}</span>
                     </div>
 
                     {(selectedProvider.phone || selectedProvider.userId?.phone) && (
                       <div className="text-sm text-gray-700 flex items-center gap-1.5 mt-1.5">
                         <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <span>{selectedProvider.phone || selectedProvider.userId?.phone}</span>
+                        <span className="min-w-0 break-all">{selectedProvider.phone || selectedProvider.userId?.phone}</span>
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-4 mb-8">
-                    <div className="flex justify-between text-base">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-base">
                       <span className="text-gray-600 font-medium">Charger Specs</span>
-                      <span className="font-bold text-black">{selectedProvider.connectorType} • {selectedProvider.chargingPower}</span>
+                      <span className="min-w-0 break-words text-right font-bold text-black">{selectedProvider.connectorType} • {selectedProvider.chargingPower}</span>
                     </div>
-                    <div className="flex justify-between text-base">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-base">
                       <span className="text-gray-600 font-medium">Charge amount</span>
-                      <span className="font-bold text-black">{calculateEstimate().added}% battery gain</span>
+                      <span className="min-w-0 break-words text-right font-bold text-black">{calculateEstimate().added}% battery gain</span>
                     </div>
-                    <div className="flex justify-between text-base">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-base">
                       <span className="text-gray-600 font-medium">Rate</span>
-                      <span className="font-bold text-black">
+                      <span className="min-w-0 break-words text-right font-bold text-black">
                         ₹{selectedProvider.price} {selectedProvider.pricingModel === 'PER_KWH' ? '/ kWh' : (selectedProvider.pricingModel === 'PER_PERCENTAGE' ? '/ %' : '/ session')}
                       </span>
                     </div>
-                    <div className="flex justify-between text-base border-t border-gray-100 pt-3">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-base border-t border-gray-100 pt-3">
                       <span className="text-gray-600 font-medium">Estimated cost</span>
                       <span className="font-bold text-black">₹{calculateEstimate().cost}</span>
                     </div>
-                    <div className="flex justify-between text-base">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-base">
                       <span className="text-gray-600 font-medium">Platform fee</span>
                       <span className="font-bold text-black">₹{calculateEstimate().fee}</span>
                     </div>
-                    <div className="flex justify-between text-2xl font-black text-black pt-4 border-t border-gray-200">
+                    <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xl sm:text-2xl font-black text-black pt-4 border-t border-gray-200">
                       <span>Total estimate</span>
                       <span>₹{calculateEstimate().total}</span>
                     </div>
@@ -408,7 +408,7 @@ const RiderDashboard = () => {
                   <button 
                     onClick={confirmChargingRequest}
                     disabled={requestingId !== null}
-                    className="w-full bg-black text-white font-bold py-5 rounded-xl hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-xl"
+                    className="w-full bg-black text-white font-bold px-3 py-4 sm:py-5 rounded-xl hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 text-base sm:text-xl text-center"
                   >
                     {requestingId !== null ? 'Sending Request...' : 'Send Request to Provider'}
                   </button>
@@ -423,14 +423,14 @@ const RiderDashboard = () => {
                 {/* Ola / Rapido Style Live Location Entry & Range Selector Card */}
                 <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-200 shadow-sm mb-8 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="h-10 w-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold border border-emerald-200 flex-shrink-0">
                         <MapPin className="h-5 w-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pickup & EV Parking Spot</div>
-                        <div className="text-sm sm:text-base font-black text-black flex items-center gap-2">
-                          <span className="truncate max-w-[260px] sm:max-w-md">{locationAddress || 'Koramangala 4th Block, Bengaluru'}</span>
+                        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm sm:text-base font-black text-black">
+                          <span className="min-w-0 flex-1 break-words">{locationAddress || 'Koramangala 4th Block, Bengaluru'}</span>
                           <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex-shrink-0">
                             GPS Active
                           </span>
@@ -534,9 +534,9 @@ const RiderDashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-black tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold text-black tracking-tight">
                       Closest Available Providers ({providers.length})
                     </h2>
                     <p className="text-xs text-gray-500 font-medium mt-0.5">
@@ -569,7 +569,7 @@ const RiderDashboard = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.08 }}
                             key={provider._id} 
-                            className={`bg-white rounded-3xl shadow-sm border overflow-hidden hover:shadow-md transition-all flex flex-col cursor-pointer relative ${
+                            className={`min-w-0 bg-white rounded-3xl shadow-sm border overflow-hidden hover:shadow-md transition-all flex flex-col cursor-pointer relative ${
                               isClosest ? 'border-black ring-1 ring-black' : 'border-gray-200'
                             }`}
                             onClick={() => handleProviderSelect(provider)}
@@ -580,11 +580,11 @@ const RiderDashboard = () => {
                               </div>
                             )}
 
-                            <div className="p-7 flex-1 flex flex-col justify-between">
+                            <div className="min-w-0 p-4 sm:p-7 flex-1 flex flex-col justify-between">
                               <div>
-                                <div className="flex justify-between items-start mb-3">
-                                  <div>
-                                    <h3 className="font-bold text-xl text-black leading-tight">
+                                <div className="flex min-w-0 justify-between items-start gap-2 mb-3">
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="break-words font-bold text-lg sm:text-xl text-black leading-tight">
                                       {provider.businessName || provider.ownerName || 'Charging Station'}
                                     </h3>
                                     <div className="text-xs text-gray-500 font-medium mt-1">
@@ -592,7 +592,7 @@ const RiderDashboard = () => {
                                     </div>
                                   </div>
                                   
-                                  <div className="text-right">
+                                  <div className="shrink-0 text-right">
                                     {compatible ? (
                                       <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                                         Compatible
@@ -634,7 +634,7 @@ const RiderDashboard = () => {
                                 <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-gray-100">
                                   <div>
                                     <span className="text-gray-400 block font-medium">Connector & Power</span>
-                                    <span className="font-bold text-black">{provider.connectorType} • {provider.chargingPower}</span>
+                                    <span className="break-words font-bold text-black">{provider.connectorType} • {provider.chargingPower}</span>
                                   </div>
                                   <div className="text-right">
                                     <span className="text-gray-400 block font-medium">Rate</span>

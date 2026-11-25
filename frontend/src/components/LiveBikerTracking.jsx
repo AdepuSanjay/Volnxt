@@ -105,10 +105,10 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
 
           <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm">
             <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-cyan-600" />
+              <Clock className="h-3.5 w-3.5 text-blue-600" />
               Live Arrival ETA
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">
+            <div className="break-words text-xl sm:text-3xl font-black text-emerald-600 mt-1">
               {hasArrived ? "Arrived!" : etaMinutes != null ? `~${etaMinutes} mins` : "Calculating route"}
             </div>
           </div>
@@ -118,19 +118,19 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
       {/* Technician & Vehicle Dispatch Card */}
       <div className="p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-200">
-          <div className="flex items-center gap-3.5">
+          <div className="flex min-w-0 items-center gap-3.5">
             <div className="h-12 w-12 rounded-full bg-black text-white flex items-center justify-center font-black text-base shadow-md flex-shrink-0">
               {bikerName.charAt(0)}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="font-bold text-sm sm:text-base text-black">{bikerName}</h4>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="break-words font-bold text-sm sm:text-base text-black">{bikerName}</h4>
                 <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
                   <ShieldCheck className="h-3 w-3 text-emerald-600" /> Verified Tech
                 </span>
               </div>
-              <p className="text-xs text-gray-600 mt-0.5 font-medium">{bikerVehicle}</p>
-              <p className="text-[11px] text-gray-500">Equipped with 30 kW High-Speed DC CCS2 & Type-2 Plugs</p>
+              <p className="break-words text-xs text-gray-600 mt-0.5 font-medium">{bikerVehicle}</p>
+              <p className="break-words text-[11px] text-gray-500">Equipped with 30 kW High-Speed DC CCS2 & Type-2 Plugs</p>
             </div>
           </div>
 

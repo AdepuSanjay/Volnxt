@@ -132,11 +132,11 @@ const AdminDashboard = () => {
 
   const activeSection = sections.find((item) => item.key === section);
   const stats = summary ? [
-    { label: 'Riders', value: summary.riders, detail: 'Registered accounts', icon: Users, tone: 'text-cyan-700 bg-cyan-50' },
+    { label: 'Riders', value: summary.riders, detail: 'Registered accounts', icon: Users, tone: 'text-blue-700 bg-blue-50' },
     { label: 'Providers', value: summary.providers, detail: `${summary.pendingProviders} awaiting review`, icon: Building2, tone: 'text-emerald-700 bg-emerald-50' },
-    { label: 'Live sessions', value: summary.activeSessions, detail: `${summary.requests} requests recorded`, icon: Gauge, tone: 'text-amber-700 bg-amber-50' },
-    { label: 'Paid volume', value: `₹${Number(summary.paidGross).toLocaleString()}`, detail: `₹${Number(summary.platformFees).toLocaleString()} platform fees`, icon: CircleDollarSign, tone: 'text-rose-700 bg-rose-50' },
-    { label: 'Open disputes', value: summary.openDisputes, detail: `${summary.ratings} ratings submitted`, icon: ShieldCheck, tone: 'text-indigo-700 bg-indigo-50' }
+    { label: 'Live sessions', value: summary.activeSessions, detail: `${summary.requests} requests recorded`, icon: Gauge, tone: 'text-blue-700 bg-blue-50' },
+    { label: 'Paid volume', value: `₹${Number(summary.paidGross).toLocaleString()}`, detail: `₹${Number(summary.platformFees).toLocaleString()} platform fees`, icon: CircleDollarSign, tone: 'text-emerald-700 bg-emerald-50' },
+    { label: 'Open disputes', value: summary.openDisputes, detail: `${summary.ratings} ratings submitted`, icon: ShieldCheck, tone: 'text-red-700 bg-red-50' }
   ] : [];
 
   return (
@@ -154,13 +154,13 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1500px] lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-slate-200 bg-white px-3 py-3 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
+      <div className="mx-auto grid min-w-0 max-w-[1500px] lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="min-w-0 border-b border-slate-200 bg-white px-3 py-3 lg:min-h-[calc(100vh-4rem)] lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
           <p className="hidden px-3 pb-3 text-[10px] font-extrabold uppercase tracking-[0.18em] text-slate-400 lg:block">Workspace</p>
-          <nav className="flex gap-1 overflow-x-auto lg:flex-col" aria-label="Admin sections">
+          <nav className="grid max-w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:flex lg:flex-col" aria-label="Admin sections">
             {sections.map(({ key, label, icon: Icon }) => (
-              <button key={key} type="button" onClick={() => selectSection(key)} className={`flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition lg:w-full ${section === key ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
-                <Icon size={17} strokeWidth={2} /><span>{label}</span>
+              <button key={key} type="button" onClick={() => selectSection(key)} className={`flex min-w-0 items-center gap-2 rounded-lg px-2 py-2.5 text-left text-xs font-semibold transition sm:gap-3 sm:px-3 sm:text-sm lg:w-full ${section === key ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+                <Icon className="shrink-0" size={17} strokeWidth={2} /><span className="min-w-0 break-words">{label}</span>
               </button>
             ))}
           </nav>
@@ -189,7 +189,7 @@ const AdminDashboard = () => {
             <>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                 {stats.map(({ label, value, detail, icon: Icon, tone }) => (
-                  <div key={label} className="min-w-0 border-y border-slate-200 bg-white p-4 first:rounded-l-lg last:rounded-r-lg sm:rounded-lg sm:border">
+                  <div key={label} className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
                     <div className="flex items-center justify-between gap-3"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span><span className={`flex h-9 w-9 items-center justify-center rounded-lg ${tone}`}><Icon size={17} /></span></div>
                     <div className="mt-4 truncate text-2xl font-black tracking-tight">{value ?? '—'}</div>
                     <p className="mt-1 truncate text-xs text-slate-500">{detail}</p>
