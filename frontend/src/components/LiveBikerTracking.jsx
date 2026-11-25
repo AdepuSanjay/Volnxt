@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import React, { useState } from 'react';
 import { 
   Navigation, 
   Phone, 
@@ -10,83 +8,28 @@ import {
   Car, 
   Clock, 
   CheckCircle2, 
-  AlertCircle,
   Radio,
   ChevronRight,
-  Compass
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LiveVehicleMap from './LiveVehicleMap';
 
 const LiveBikerTracking = ({ request, onStatusChange }) => {
   const [distanceKm, setDistanceKm] = useState(() => {
-    return Number(request.currentDistanceKm || request.distance || 2.4);
+    return request.currentLat != null && request.currentLng != null
+      ? Number(request.currentDistanceKm || request.distance || 0)
+      : null;
   });
   const [etaMinutes, setEtaMinutes] = useState(() => {
-    return Number(request.etaMinutes || Math.max(2, Math.round(distanceKm * 2.5)));
+    return request.currentLat != null && request.currentLng != null
+      ? Number(request.etaMinutes || 0)
+      : null;
   });
-  const [speedKmh, setSpeedKmh] = useState(32);
-  const [hasArrived, setHasArrived] = useState(request.status === 'ARRIVED');
-  const [progressPercent, setProgressPercent] = useState(() => {
-    const orig = Number(request.distance || 2.4);
-    if (orig <= 0) return 100;
-    const remaining = Number(request.currentDistanceKm || orig);
-    return Math.min(100, Math.max(10, Math.round(((orig - remaining) / orig) * 100)));
-  });
+  const hasArrived = request.status === 'ARRIVED';
 
   const bikerName = request.bikerName || request.providerId?.name || 'Ramesh K. (Certified EV Tech)';
   const bikerPhone = request.bikerPhone || request.providerId?.phone || '+91 98450 12345';
   const bikerVehicle = request.bikerVehicle || 'VOLNXT Mobile DC Van (KA-01-EV-4421)';
-
-  // Live simulation: dynamically progress the biker towards the rider every 3 seconds
-  useEffect(() => {
-    if (request.status === 'ARRIVED' || hasArrived) {
-      setDistanceKm(0);
-      setEtaMinutes(0);
-      setProgressPercent(100);
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setDistanceKm((prevDist) => {
-        if (prevDist <= 0.2) {
-          clearInterval(timer);
-          setHasArrived(true);
-          setEtaMinutes(0);
-          setProgressPercent(100);
-          // Auto update status to ARRIVED
-          onStatusChange('ARRIVED');
-          return 0;
-        }
-
-        const step = 0.15 + (Math.random() * 0.1); // 150m - 250m per tick
-        const nextDist = Math.max(0, Number((prevDist - step).toFixed(2)));
-        const nextEta = Math.max(1, Math.round(nextDist * 2.2));
-        const orig = Number(request.distance || 2.4);
-        const nextProg = Math.min(100, Math.max(15, Math.round(((orig - nextDist) / orig) * 100)));
-
-        setEtaMinutes(nextEta);
-        setProgressPercent(nextProg);
-        setSpeedKmh(Math.floor(28 + Math.random() * 12));
-
-        // Sync with backend tracking endpoint periodically
-        try {
-          const token = localStorage.getItem('token');
-          axios.put(`${API_BASE_URL}/api/requests/${request._id}/tracking`, {
-            currentDistanceKm: nextDist,
-            etaMinutes: nextEta,
-            status: nextDist === 0 ? 'ARRIVED' : 'ON_THE_WAY'
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          }).catch(() => {});
-        } catch (e) {}
-
-        return nextDist;
-      });
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, [request._id, request.distance, request.status, hasArrived, onStatusChange]);
 
   return (
     <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden text-left">
@@ -104,24 +47,24 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
           <div>
             <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              {hasArrived ? "Mobile Unit Arrived" : "Live Biker Approaching"}
+              {hasArrived ? "Mobile Unit Arrived" : "Live Provider Approaching"}
             </div>
             <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">
               {hasArrived ? "Technician Arrived at Vehicle" : "En Route to Your Location"}
             </h3>
             <p className="text-xs sm:text-sm text-gray-300 mt-0.5">
               {hasArrived 
-                ? "Your certified mobile DC charger is parked and ready to plug in."
-                : "Real-time GPS telemetry is active. Mobile charger is navigating toward your coordinates."}
+                ? "Your provider is at the pickup point and ready to connect."
+                : "Live provider GPS is updating the route and arrival estimate."}
             </p>
           </div>
 
-          {/* Speed & Proximity Pill */}
+          {/* Live GPS status */}
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/15 self-start sm:self-auto">
-            <Radio className="h-5 w-5 text-emerald-400 animate-spin" />
+            <Radio className="h-5 w-5 text-emerald-400 animate-pulse" />
             <div>
-              <div className="text-[10px] text-gray-300 font-bold uppercase">Biker Speed</div>
-              <div className="text-sm font-black text-white">{hasArrived ? 'Parked' : `${speedKmh} km/h`}</div>
+              <div className="text-[10px] text-gray-300 font-bold uppercase">Trip status</div>
+              <div className="text-sm font-black text-white">{hasArrived ? 'Arrived' : 'Live GPS'}</div>
             </div>
           </div>
         </div>
@@ -133,11 +76,16 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
           riderLat={request.riderLat || 12.9716}
           riderLng={request.riderLng || 77.5946}
           riderAddress={request.riderAddress || "Your EV Pickup Point"}
-          providerLat={request.currentLat || 12.9866}
-          providerLng={request.currentLng || 77.6096}
+          providerLat={request.currentLat}
+          providerLng={request.currentLng}
           providerName={bikerName}
+          requestId={request._id}
           distanceKm={distanceKm}
           etaMinutes={etaMinutes}
+          onRouteMetrics={(metrics) => {
+            setDistanceKm(metrics?.distanceKm ?? null);
+            setEtaMinutes(metrics?.etaMinutes ?? null);
+          }}
           status={hasArrived ? 'ARRIVED' : request.status}
           role="RIDER"
           height="h-[340px] sm:h-[400px]"
@@ -151,7 +99,7 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
               Remaining Distance
             </div>
             <div className="text-2xl sm:text-3xl font-black text-black mt-1">
-              {hasArrived ? "0.0 km" : `${distanceKm.toFixed(1)} km`}
+              {hasArrived ? "0.0 km" : distanceKm != null ? `${distanceKm.toFixed(1)} km` : "Waiting for GPS"}
             </div>
           </div>
 
@@ -161,7 +109,7 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
               Live Arrival ETA
             </div>
             <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">
-              {hasArrived ? "Arrived!" : `~${etaMinutes} mins`}
+              {hasArrived ? "Arrived!" : etaMinutes != null ? `~${etaMinutes} mins` : "Calculating route"}
             </div>
           </div>
         </div>
@@ -250,10 +198,6 @@ const LiveBikerTracking = ({ request, onStatusChange }) => {
               <button
                 type="button"
                 onClick={() => {
-                  setHasArrived(true);
-                  setDistanceKm(0);
-                  setEtaMinutes(0);
-                  setProgressPercent(100);
                   onStatusChange('ARRIVED');
                 }}
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition"

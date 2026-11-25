@@ -1,316 +1,334 @@
 import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import { 
-  Navigation, 
-  MapPin, 
-  Zap, 
-  Car, 
-  Compass, 
-  ExternalLink, 
-  Maximize2, 
-  Layers, 
-  LocateFixed, 
-  Radio, 
-  Clock 
-} from 'lucide-react';
+import axios from 'axios';
+import { ExternalLink, LocateFixed, MapPin, Navigation, Radio } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+let googleMapsPromise;
+
+const loadGoogleMaps = () => {
+  if (window.google?.maps) return Promise.resolve(window.google.maps);
+  if (!GOOGLE_MAPS_API_KEY) return Promise.reject(new Error('Add VITE_GOOGLE_MAPS_API_KEY to the frontend environment.'));
+
+  if (!googleMapsPromise) {
+    googleMapsPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&v=weekly`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve(window.google.maps);
+      script.onerror = () => {
+        googleMapsPromise = null;
+        reject(new Error('Google Maps could not be loaded. Check the API key and enabled APIs.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  return googleMapsPromise;
+};
+
+const toPosition = (lat, lng) => {
+  if (lat === null || lat === undefined || lng === null || lng === undefined) return null;
+  const position = { lat: Number(lat), lng: Number(lng) };
+  return Number.isFinite(position.lat) && Number.isFinite(position.lng) ? position : null;
+};
+
+const distanceBetween = (first, second) => {
+  const radians = (degrees) => degrees * Math.PI / 180;
+  const latDelta = radians(second.lat - first.lat);
+  const lngDelta = radians(second.lng - first.lng);
+  const value = Math.sin(latDelta / 2) ** 2
+    + Math.cos(radians(first.lat)) * Math.cos(radians(second.lat)) * Math.sin(lngDelta / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+};
 
 const LiveVehicleMap = ({
   riderLat = 12.9716,
   riderLng = 77.5946,
-  riderAddress = "Current EV Location",
-  providerLat = 12.9866,
-  providerLng = 77.6096,
-  providerName = "VOLNXT Mobile Charger #402",
-  riderName = "Rider's EV",
-  status = "ON_THE_WAY",
-  distanceKm = 1.8,
-  etaMinutes = 4,
-  role = "RIDER", // 'RIDER' or 'PROVIDER'
-  height = "h-[360px] sm:h-[440px]"
+  riderAddress = 'Current EV Location',
+  providerLat,
+  providerLng,
+  providerName = 'Mobile Charger',
+  riderName = 'Rider EV',
+  requestId,
+  status = 'ON_THE_WAY',
+  distanceKm,
+  etaMinutes,
+  onRouteMetrics,
+  role = 'RIDER',
+  height = 'h-[360px] sm:h-[440px]'
 }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const riderMarkerRef = useRef(null);
   const providerMarkerRef = useRef(null);
-  const routeLineRef = useRef(null);
-  const baseLineRef = useRef(null);
+  const directionsServiceRef = useRef(null);
+  const directionsRendererRef = useRef(null);
+  const routeRequestRef = useRef(null);
+  const watchIdRef = useRef(null);
+  const onRouteMetricsRef = useRef(onRouteMetrics);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState('');
+  const [gpsError, setGpsError] = useState('');
+  const [providerPosition, setProviderPosition] = useState(() => toPosition(providerLat, providerLng));
+  const [routeMetrics, setRouteMetrics] = useState(() => {
+    if (!toPosition(providerLat, providerLng)) return null;
+    const distance = Number(distanceKm);
+    const eta = Number(etaMinutes);
+    return Number.isFinite(distance) && Number.isFinite(eta) ? { distanceKm: distance, etaMinutes: eta } : null;
+  });
 
-  const [activeDistance, setActiveDistance] = useState(distanceKm);
-  const [activeEta, setActiveEta] = useState(etaMinutes);
-  const [currentProvPos, setCurrentProvPos] = useState({ lat: providerLat, lng: providerLng });
+  const riderPosition = toPosition(riderLat, riderLng) || { lat: 12.9716, lng: 77.5946 };
+  const isArrived = status === 'ARRIVED';
+  const isProviderTracking = role === 'PROVIDER' && ['ACCEPTED', 'ON_THE_WAY'].includes(status);
 
-  const isArrived = status === 'ARRIVED' || activeDistance <= 0.1;
+  onRouteMetricsRef.current = onRouteMetrics;
 
-  // Initialize or update Leaflet Map
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    const nextPosition = toPosition(providerLat, providerLng);
+    if (nextPosition) setProviderPosition(nextPosition);
+  }, [providerLat, providerLng]);
 
-    // If map already initialized, re-use instance
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: [riderLat, riderLng],
+  useEffect(() => {
+    let cancelled = false;
+
+    loadGoogleMaps().then((maps) => {
+      if (cancelled || !mapContainerRef.current) return;
+
+      const map = new maps.Map(mapContainerRef.current, {
+        center: riderPosition,
         zoom: 14,
-        zoomControl: false
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false,
+        gestureHandling: 'greedy',
+        styles: [
+          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit', stylers: [{ visibility: 'off' }] }
+        ]
+      });
+      const riderMarker = new maps.Marker({
+        map,
+        position: riderPosition,
+        title: role === 'RIDER' ? 'Your EV pickup' : riderName,
+        label: { text: 'R', color: '#ffffff', fontWeight: '700' },
+        icon: { path: maps.SymbolPath.CIRCLE, scale: 12, fillColor: '#111827', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 }
+      });
+      const providerMarker = new maps.Marker({
+        map: null,
+        title: role === 'PROVIDER' ? 'Your live location' : providerName,
+        label: { text: 'P', color: '#052e16', fontWeight: '700' },
+        icon: { path: maps.SymbolPath.CIRCLE, scale: 12, fillColor: '#34d399', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 }
+      });
+      const directionsRenderer = new maps.DirectionsRenderer({
+        map,
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: { strokeColor: '#059669', strokeOpacity: 0.9, strokeWeight: 6 }
       });
 
-      // CartoDB Voyager / OpenStreetMap clean tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-        subdomains: 'abcd'
-      }).addTo(map);
-
-      // Add Zoom Control at bottom right
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
       mapInstanceRef.current = map;
-    }
-
-    const map = mapInstanceRef.current;
-
-    // Custom Rider EV Marker
-    const riderHtml = `
-      <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); pointer-events: auto;">
-        <div style="position: absolute; width: 48px; height: 48px; background: rgba(16, 185, 129, 0.3); border-radius: 50%; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-        <div style="position: relative; width: 38px; height: 38px; background: #000; border: 2.5px solid #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.45);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
-            <circle cx="7" cy="17" r="2"/>
-            <path d="M9 17h6"/>
-            <circle cx="17" cy="17" r="2"/>
-          </svg>
-        </div>
-        <div style="background: rgba(0,0,0,0.85); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; margin-top: 4px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-          ${role === 'RIDER' ? 'Your EV Pickup' : riderName}
-        </div>
-      </div>
-    `;
-
-    const riderIcon = L.divIcon({
-      className: 'rider-div-icon',
-      html: riderHtml,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      riderMarkerRef.current = riderMarker;
+      providerMarkerRef.current = providerMarker;
+      directionsServiceRef.current = new maps.DirectionsService();
+      directionsRendererRef.current = directionsRenderer;
+      setMapError('');
+      setMapReady(true);
+    }).catch((error) => {
+      if (!cancelled) setMapError(error.message || 'Google Maps is unavailable.');
     });
 
-    if (riderMarkerRef.current) {
-      riderMarkerRef.current.setLatLng([riderLat, riderLng]);
-    } else {
-      riderMarkerRef.current = L.marker([riderLat, riderLng], { icon: riderIcon }).addTo(map);
-    }
-
-    // Custom Mobile Van / Biker Marker
-    const provHtml = `
-      <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); pointer-events: auto;">
-        <div style="position: absolute; width: 48px; height: 48px; background: rgba(6, 182, 212, 0.35); border-radius: 50%; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-        <div style="position: relative; width: 38px; height: 38px; background: #06b6d4; border: 2.5px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(6,182,212,0.65);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#000" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-        </div>
-        <div style="background: #000; color: #06b6d4; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; margin-top: 4px; white-space: nowrap; border: 1px solid #06b6d4; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-          ${role === 'PROVIDER' ? 'Your Mobile Van' : providerName}
-        </div>
-      </div>
-    `;
-
-    const provIcon = L.divIcon({
-      className: 'prov-div-icon',
-      html: provHtml,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
-    });
-
-    const currLat = currentProvPos.lat || providerLat;
-    const currLng = currentProvPos.lng || providerLng;
-
-    if (providerMarkerRef.current) {
-      providerMarkerRef.current.setLatLng([currLat, currLng]);
-    } else {
-      providerMarkerRef.current = L.marker([currLat, currLng], { icon: provIcon }).addTo(map);
-    }
-
-    // Generate Route Waypoints between Provider and Rider
-    const midLat = (currLat + riderLat) / 2 + 0.002;
-    const midLng = (currLng + riderLng) / 2 - 0.003;
-    const routePoints = [
-      [currLat, currLng],
-      [midLat, midLng],
-      [riderLat, riderLng]
-    ];
-
-    if (baseLineRef.current) map.removeLayer(baseLineRef.current);
-    if (routeLineRef.current) map.removeLayer(routeLineRef.current);
-
-    // Dark Street Route Track
-    baseLineRef.current = L.polyline(routePoints, {
-      color: '#0f172a',
-      weight: 6,
-      opacity: 0.85,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }).addTo(map);
-
-    // Glowing Flowing Energy Route Polyline
-    routeLineRef.current = L.polyline(routePoints, {
-      color: '#10b981',
-      weight: 4,
-      opacity: 0.95,
-      dashArray: '8, 10',
-      lineCap: 'round',
-      lineJoin: 'round'
-    }).addTo(map);
-
-    // Fit Map to contain both markers nicely
-    const bounds = L.latLngBounds([[currLat, currLng], [riderLat, riderLng]]);
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
-
-    // Cleanup when component unmounts
     return () => {
-      // Keep instance or cleanup on unmount
-    };
-  }, [riderLat, riderLng, providerLat, providerLng, currentProvPos, role, providerName, riderName]);
-
-  // Cleanup map instance when unmounting component permanently
-  useEffect(() => {
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      cancelled = true;
+      directionsRendererRef.current?.setMap(null);
+      riderMarkerRef.current?.setMap(null);
+      providerMarkerRef.current?.setMap(null);
+      mapInstanceRef.current = null;
+      setMapReady(false);
     };
   }, []);
 
-  // Live real-time simulation: smoothly progress the provider van towards rider
   useEffect(() => {
-    if (isArrived) {
-      setActiveDistance(0);
-      setActiveEta(0);
+    if (!mapReady || !mapInstanceRef.current || !riderMarkerRef.current || !providerMarkerRef.current) return;
+
+    const maps = window.google.maps;
+    const map = mapInstanceRef.current;
+    riderMarkerRef.current.setPosition(riderPosition);
+
+    if (!providerPosition) {
+      providerMarkerRef.current.setMap(null);
+      directionsRendererRef.current.set('directions', null);
+      setRouteMetrics(null);
+      onRouteMetricsRef.current?.(null);
       return;
     }
 
-    const interval = setInterval(() => {
-      setActiveDistance(prev => {
-        if (prev <= 0.15) {
-          clearInterval(interval);
-          setActiveEta(0);
-          return 0;
+    providerMarkerRef.current.setMap(map);
+    providerMarkerRef.current.setPosition(providerPosition);
+
+    if (isArrived) {
+      setRouteMetrics({ distanceKm: 0, etaMinutes: 0 });
+      onRouteMetricsRef.current?.({ distanceKm: 0, etaMinutes: 0 });
+      directionsRendererRef.current.set('directions', null);
+      return;
+    }
+
+    const now = Date.now();
+    const lastRequest = routeRequestRef.current;
+    const movedKm = lastRequest ? distanceBetween(lastRequest.position, providerPosition) : Infinity;
+    if (lastRequest && movedKm < 0.25 && now - lastRequest.time < 30000) return;
+    routeRequestRef.current = { position: providerPosition, time: now };
+
+    directionsServiceRef.current.route({
+      origin: providerPosition,
+      destination: riderPosition,
+      travelMode: maps.TravelMode.DRIVING,
+      drivingOptions: { departureTime: new Date(), trafficModel: maps.TrafficModel.BEST_GUESS }
+    }, (result, routeStatus) => {
+      if (routeStatus === maps.DirectionsStatus.OK && result?.routes?.[0]?.legs?.[0]) {
+        directionsRendererRef.current.setDirections(result);
+        const leg = result.routes[0].legs[0];
+        const metrics = {
+          distanceKm: leg.distance.value / 1000,
+          etaMinutes: Math.max(1, Math.ceil((leg.duration_in_traffic?.value || leg.duration.value) / 60))
+        };
+        setRouteMetrics(metrics);
+        onRouteMetricsRef.current?.(metrics);
+        if (!lastRequest) {
+          map.fitBounds(result.routes[0].bounds, { top: 90, right: 40, bottom: 90, left: 40 });
         }
-        const next = Math.max(0, Number((prev - 0.12).toFixed(2)));
-        setActiveEta(Math.max(1, Math.round(next * 2.2)));
+        setMapError('');
+        return;
+      }
 
-        // Interpolate provider coordinates towards rider
-        const ratio = Math.min(1, 0.08);
-        setCurrentProvPos(cur => ({
-          lat: cur.lat + (riderLat - cur.lat) * ratio,
-          lng: cur.lng + (riderLng - cur.lng) * ratio
-        }));
+      const directDistance = distanceBetween(providerPosition, riderPosition);
+      const fallbackMetrics = {
+        distanceKm: directDistance,
+        etaMinutes: Math.max(1, Math.ceil(directDistance * 2.5))
+      };
+      setRouteMetrics(fallbackMetrics);
+      onRouteMetricsRef.current?.(fallbackMetrics);
+      setMapError('Road route unavailable. Showing direct range.');
+    });
+  }, [mapReady, riderLat, riderLng, providerPosition, isArrived]);
 
-        return next;
-      });
-    }, 3500);
+  useEffect(() => {
+    if (!isProviderTracking || !requestId || !navigator.geolocation) return undefined;
 
-    return () => clearInterval(interval);
-  }, [riderLat, riderLng, isArrived]);
+    let lastSentPosition = null;
+    let lastSentAt = 0;
+    setGpsError('');
+    watchIdRef.current = navigator.geolocation.watchPosition(async (position) => {
+      const nextPosition = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      if (position.coords.accuracy > 150) return;
+
+      setProviderPosition(nextPosition);
+      setGpsError('');
+      const now = Date.now();
+      const movedKm = lastSentPosition ? distanceBetween(lastSentPosition, nextPosition) : Infinity;
+      if (lastSentPosition && movedKm < 0.015 && now - lastSentAt < 10000) return;
+
+      lastSentPosition = nextPosition;
+      lastSentAt = now;
+      try {
+        const token = localStorage.getItem('token');
+        await axios.put(`${API_BASE_URL}/api/requests/${requestId}/tracking`, nextPosition, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch {
+        setGpsError('Could not sync live location.');
+      }
+    }, (error) => {
+      setGpsError(error.code === 1 ? 'Allow location access to share live GPS.' : 'Waiting for an accurate GPS signal.');
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 15000
+    });
+
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    };
+  }, [isProviderTracking, requestId]);
 
   const handleRecenter = () => {
-    if (!mapInstanceRef.current) return;
-    const bounds = L.latLngBounds([
-      [currentProvPos.lat, currentProvPos.lng],
-      [riderLat, riderLng]
-    ]);
-    mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (!providerPosition) {
+      map.setCenter(riderPosition);
+      map.setZoom(15);
+      return;
+    }
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend(riderPosition);
+    bounds.extend(providerPosition);
+    map.fitBounds(bounds, { top: 90, right: 40, bottom: 90, left: 40 });
   };
 
-  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentProvPos.lat},${currentProvPos.lng}&destination=${riderLat},${riderLng}`;
+  const googleMapsUrl = providerPosition
+    ? `https://www.google.com/maps/dir/?api=1&origin=${providerPosition.lat},${providerPosition.lng}&destination=${riderPosition.lat},${riderPosition.lng}&travelmode=driving`
+    : `https://www.google.com/maps/search/?api=1&query=${riderPosition.lat},${riderPosition.lng}`;
+  const shownDistance = isArrived ? '0.0 km' : routeMetrics ? `${routeMetrics.distanceKm.toFixed(1)} km` : '--';
+  const shownEta = isArrived ? 'Arrived' : routeMetrics ? `~${routeMetrics.etaMinutes} min` : 'Waiting for GPS';
 
   return (
-    <div className={`relative w-full ${height} rounded-3xl overflow-hidden shadow-xl border border-gray-200/80 bg-slate-950 select-none group`}>
-      
-      {/* Actual Leaflet Map Canvas */}
-      <div ref={mapContainerRef} className="w-full h-full z-0" />
+    <div className={`relative w-full ${height} overflow-hidden rounded-3xl border border-gray-200 bg-slate-100 shadow-xl`}>
+      <div ref={mapContainerRef} className="h-full w-full" aria-label="Live Google map between rider and provider" />
 
-      {/* Top Floating Ola/Rapido Style Live Trip Telemetry HUD */}
-      <div className="absolute top-3 left-3 right-3 z-[400] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        
-        {/* Left Telemetry Pill */}
-        <div className="bg-black/85 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/15 text-white flex items-center gap-3 shadow-2xl pointer-events-auto">
+      {mapError && (
+        <div className="absolute inset-x-3 top-20 z-10 rounded-xl border border-amber-200 bg-white/95 px-3 py-2 text-xs font-semibold text-amber-900 shadow-md">
+          {mapError}
+        </div>
+      )}
+
+      <div className="absolute left-3 right-3 top-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-white/15 bg-slate-950/90 px-3.5 py-2 text-white shadow-xl backdrop-blur-md">
           <div className="flex items-center gap-1.5">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-            </span>
-            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
-              {isArrived ? "Arrived" : "Live GPS"}
-            </span>
+            <Radio className={`h-3.5 w-3.5 ${providerPosition ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+            <span className="text-[11px] font-black uppercase text-emerald-300">{isArrived ? 'Arrived' : providerPosition ? 'Live GPS' : 'GPS pending'}</span>
           </div>
-
-          <div className="h-4 w-px bg-white/20" />
-
+          <span className="h-5 w-px bg-white/20" />
           <div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase">Distance</div>
-            <div className="text-xs font-black text-white">
-              {isArrived ? "0.0 km" : `${activeDistance.toFixed(1)} km`}
-            </div>
+            <div className="text-[9px] font-bold uppercase text-gray-400">Road range</div>
+            <div className="text-xs font-black">{shownDistance}</div>
           </div>
-
-          <div className="h-4 w-px bg-white/20" />
-
+          <span className="h-5 w-px bg-white/20" />
           <div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase">Arrival ETA</div>
-            <div className="text-xs font-black text-cyan-400">
-              {isArrived ? "Now!" : `~${activeEta} mins`}
-            </div>
+            <div className="text-[9px] font-bold uppercase text-gray-400">ETA</div>
+            <div className="text-xs font-black text-cyan-300">{shownEta}</div>
           </div>
         </div>
 
-        {/* Right Action: Recenter & Google Maps Navigation Link */}
-        <div className="flex items-center gap-1.5 pointer-events-auto">
-          <button
-            type="button"
-            onClick={handleRecenter}
-            aria-label="Recenter map"
-            className="p-2 rounded-xl bg-black/80 backdrop-blur-md text-white hover:bg-black border border-white/15 shadow-lg transition"
-            title="Recenter route"
-          >
+        <div className="pointer-events-auto flex items-center gap-1.5">
+          <button type="button" onClick={handleRecenter} aria-label="Recenter map" title="Recenter route" className="rounded-xl border border-white/15 bg-slate-950/85 p-2 text-white shadow-lg hover:bg-black">
             <LocateFixed className="h-4 w-4 text-emerald-400" />
           </button>
-
-          <a
-            href={googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-black px-3 py-1.5 rounded-xl font-black text-xs shadow-lg transition border border-emerald-400"
-            title="Open Turn-by-Turn Navigation in Google Maps"
-          >
-            <Navigation className="h-3.5 w-3.5 fill-black" />
-            <span>Turn-by-Turn</span>
-            <ExternalLink className="h-3 w-3 opacity-70" />
+          <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" title="Open route in Google Maps" className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400 bg-emerald-500 px-3 py-2 text-xs font-black text-black shadow-lg hover:bg-emerald-400">
+            <Navigation className="h-3.5 w-3.5" />
+            <span>Directions</span>
+            <ExternalLink className="h-3 w-3" />
           </a>
         </div>
       </div>
 
-      {/* Bottom Floating Address Bar (Ola / Rapido Style Pickup Pin Box) */}
-      <div className="absolute bottom-3 left-3 right-3 sm:left-4 sm:right-auto sm:max-w-md z-[400] pointer-events-auto">
-        <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-gray-200 shadow-2xl flex items-center justify-between gap-3 text-left">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 flex-shrink-0 border border-emerald-200">
-              <MapPin className="h-4 w-4" />
-            </div>
-            <div className="truncate">
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                {role === 'RIDER' ? "Your Live Pickup Location" : "Rider Pickup Point"}
-              </div>
-              <div className="text-xs font-bold text-black truncate">
-                {riderAddress || "Koramangala 4th Block, Bengaluru"}
-              </div>
+      <div className="absolute bottom-3 left-3 right-3 z-10 sm:right-auto sm:max-w-md">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/95 p-3 text-left shadow-xl backdrop-blur-md">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex-shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 p-2 text-emerald-700"><MapPin className="h-4 w-4" /></div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-bold uppercase text-gray-400">{role === 'RIDER' ? 'Your pickup point' : 'Rider pickup point'}</div>
+              <div className="truncate text-xs font-bold text-black">{riderAddress || 'Current GPS location'}</div>
             </div>
           </div>
-
-          <div className="text-right flex-shrink-0">
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-              {role === 'PROVIDER' ? 'Target Vehicle' : 'Verified GPS'}
-            </span>
+          <div className="flex-shrink-0 text-right">
+            <div className="text-[10px] font-bold text-gray-500">{role === 'PROVIDER' ? 'Sharing status' : providerName}</div>
+            <div className="max-w-40 truncate text-[10px] font-semibold text-emerald-700">{role === 'PROVIDER' ? (gpsError || (isProviderTracking ? 'Sharing live location' : 'Location paused')) : (gpsError || (providerPosition ? 'Provider location received' : 'Waiting for provider GPS'))}</div>
           </div>
         </div>
       </div>

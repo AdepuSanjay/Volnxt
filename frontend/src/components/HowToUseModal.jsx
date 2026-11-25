@@ -7,7 +7,6 @@ import {
   HelpCircle, 
   X, 
   ShieldCheck, 
-  DollarSign, 
   ArrowRight, 
   Globe, 
   CheckCircle2, 
@@ -276,7 +275,7 @@ const HowToUseModal = ({ isOpen, onClose, defaultTab = 'RIDER', isStandalonePage
             {/* Pro Tips Box */}
             <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-2xl text-[11px] sm:text-xs text-gray-600 space-y-1.5">
               <div className="font-bold text-black flex items-center gap-1.5">
-                <DollarSign className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                <span className="h-4 w-4 flex-shrink-0 text-center font-bold leading-4 text-emerald-600">₹</span>
                 <span>{t.providerTipsTitle}</span>
               </div>
               {t.providerTips.map((tip, idx) => (

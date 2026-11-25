@@ -19,7 +19,6 @@ import {
   Radio,
   ArrowRight,
   Sliders,
-  DollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -177,11 +176,25 @@ const ChargingSession = () => {
   };
 
   if (loading || !session) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-10 w-10 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
-        <p className="text-gray-500 font-bold">Connecting to Live Charging Stream...</p>
-      </div>
+    <div className="min-h-screen bg-slate-50/50 font-sans" aria-busy="true" aria-label="Loading charging session">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3.5 flex justify-between items-center">
+        <div className="h-7 w-28 rounded bg-gray-200 animate-pulse" />
+        <div className="h-8 w-24 rounded-full bg-gray-100 animate-pulse" />
+      </nav>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 space-y-6 animate-pulse">
+          <div className="h-2 w-full rounded-full bg-gray-100" />
+          <div className="space-y-3">
+            <div className="h-7 w-2/3 rounded bg-gray-200" />
+            <div className="h-4 w-1/2 rounded bg-gray-100" />
+          </div>
+          <div className="h-48 rounded-2xl bg-gray-100" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-24 rounded-2xl bg-gray-100" />
+            <div className="h-24 rounded-2xl bg-gray-100" />
+          </div>
+        </div>
+      </main>
     </div>
   );
 
@@ -324,7 +337,7 @@ const ChargingSession = () => {
 
                 <div className="bg-slate-50 p-4 rounded-2xl border border-gray-200">
                   <div className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-sm font-bold leading-none text-emerald-600">₹</span>
                     Live Running Cost
                   </div>
                   <div className="text-xl sm:text-2xl font-black text-emerald-700 mt-1">

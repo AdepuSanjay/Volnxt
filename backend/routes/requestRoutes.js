@@ -16,7 +16,7 @@ router.get('/my', protect, getMyRequests);
 router.get('/provider', protect, provider, getProviderRequests);
 router.put('/:id/accept', protect, provider, acceptRequest);
 router.put('/:id/reject', protect, provider, rejectRequest);
-router.put('/:id/tracking', protect, updateTracking);
+router.put('/:id/tracking', protect, provider, updateTracking);
 router.put('/:id/status', protect, updateRequestStatus);
 
 module.exports = router;

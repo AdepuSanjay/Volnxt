@@ -5,7 +5,10 @@ const { registerUser } = require('../controllers/authController');
 const { protect, provider } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
-router.post('/register', registerUser);
+router.post('/register', (req, res, next) => {
+  req.registrationRole = 'PROVIDER';
+  next();
+}, registerUser);
 router.get('/nearby', getNearbyProviders);
 router.get('/:id', getProviderById);
 router.put('/profile', protect, provider, updateProfile);

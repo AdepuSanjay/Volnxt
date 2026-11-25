@@ -359,10 +359,11 @@ const ProviderDashboard = () => {
                             riderLat={request.riderLat || 12.9716}
                             riderLng={request.riderLng || 77.5946}
                             riderAddress={riderAddress}
-                            providerLat={request.currentLat || 12.9866}
-                            providerLng={request.currentLng || 77.6096}
+                            providerLat={request.currentLat}
+                            providerLng={request.currentLng}
                             providerName={extraData?.businessName || user?.name || "Mobile Fast Charger"}
                             riderName={riderName}
+                            requestId={request._id}
                             status={request.status}
                             distanceKm={request.currentDistanceKm || request.distance || 1.8}
                             etaMinutes={request.etaMinutes || 4}

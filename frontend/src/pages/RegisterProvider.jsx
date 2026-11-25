@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
-import { ArrowRight, ArrowLeft, MapPin, Zap, CheckCircle2, ShieldCheck, Navigation, AlertCircle, DollarSign, Clock } from 'lucide-react';
+import { ArrowRight, ArrowLeft, MapPin, Zap, CheckCircle2, ShieldCheck, Navigation, AlertCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const InputField = ({ label, name, type = 'text', required = true, value, onChange, placeholder, ...props }) => (
@@ -144,7 +144,7 @@ const RegisterProvider = () => {
     setError('');
 
     try {
-      await axios.post(`${API_BASE_URL}/api/auth/register`, {
+      await axios.post(`${API_BASE_URL}/api/providers/register`, {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -655,7 +655,7 @@ const RegisterProvider = () => {
           {/* Quick Host Benefits Strip */}
           <div className="grid grid-cols-3 gap-3 p-4 bg-black/60 backdrop-blur-md border border-white/15 rounded-2xl">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <span className="h-4 w-4 flex-shrink-0 text-center font-bold leading-4 text-emerald-400">₹</span>
               <div className="text-xs font-bold text-white">Instant Payouts</div>
             </div>
             <div className="flex items-center gap-2 border-l border-white/10 pl-3">

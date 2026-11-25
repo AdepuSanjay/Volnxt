@@ -15,7 +15,6 @@ const createRequest = async (req, res) => {
     } = req.body;
     
     const initialDistance = Number(distance) || 2.4;
-    const initialEta = Math.max(3, Math.round(initialDistance * 2.8));
 
     const request = await ChargingRequest.create({
       riderId: req.user._id,
@@ -25,13 +24,9 @@ const createRequest = async (req, res) => {
       estimatedPrice,
       estimatedTime,
       distance: initialDistance,
-      currentDistanceKm: initialDistance,
-      etaMinutes: initialEta,
       riderLat: riderLat || 12.9716,
       riderLng: riderLng || 77.5946,
       riderAddress: riderAddress || 'Current GPS Location',
-      currentLat: riderLat ? (Number(riderLat) + 0.015) : 12.9866,
-      currentLng: riderLng ? (Number(riderLng) + 0.015) : 77.6096,
       status: 'PENDING'
     });
 
@@ -69,11 +64,12 @@ const acceptRequest = async (req, res) => {
     const current = await ChargingRequest.findById(req.params.id);
     if (!current) return res.status(404).json({ message: 'Request not found' });
 
-    const dist = current.distance || 2.4;
     const updateData = {
       status: 'ON_THE_WAY',
-      currentDistanceKm: dist,
-      etaMinutes: Math.max(3, Math.round(dist * 2.8)),
+      currentLat: null,
+      currentLng: null,
+      currentDistanceKm: null,
+      etaMinutes: null,
       bikerName: req.body.bikerName || 'Ramesh K. (Certified EV Tech)',
       bikerPhone: req.body.bikerPhone || '+91 98450 12345',
       bikerVehicle: req.body.bikerVehicle || 'VOLNXT Mobile DC Van (KA-01-EV-4421)'
@@ -100,19 +96,36 @@ const rejectRequest = async (req, res) => {
 
 const updateTracking = async (req, res) => {
   try {
-    const { currentDistanceKm, etaMinutes, currentLat, currentLng, status } = req.body;
-    const updateFields = {};
-    if (currentDistanceKm !== undefined) updateFields.currentDistanceKm = currentDistanceKm;
-    if (etaMinutes !== undefined) updateFields.etaMinutes = etaMinutes;
-    if (currentLat !== undefined) updateFields.currentLat = currentLat;
-    if (currentLng !== undefined) updateFields.currentLng = currentLng;
-    if (status) updateFields.status = status;
+    const request = await ChargingRequest.findById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+    if (String(request.providerId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Only the assigned provider can update tracking' });
+    }
 
-    const request = await ChargingRequest.findByIdAndUpdate(req.params.id, updateFields, { new: true })
+    const currentLat = Number(req.body.currentLat);
+    const currentLng = Number(req.body.currentLng);
+    if (!Number.isFinite(currentLat) || !Number.isFinite(currentLng)
+      || currentLat < -90 || currentLat > 90 || currentLng < -180 || currentLng > 180) {
+      return res.status(400).json({ message: 'Valid provider coordinates are required' });
+    }
+
+    const updateFields = { currentLat, currentLng };
+    if (Number.isFinite(request.riderLat) && Number.isFinite(request.riderLng)) {
+      const toRadians = (degrees) => degrees * Math.PI / 180;
+      const latDelta = toRadians(request.riderLat - currentLat);
+      const lngDelta = toRadians(request.riderLng - currentLng);
+      const value = Math.sin(latDelta / 2) ** 2
+        + Math.cos(toRadians(currentLat)) * Math.cos(toRadians(request.riderLat)) * Math.sin(lngDelta / 2) ** 2;
+      const rangeKm = 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+      updateFields.currentDistanceKm = Number(rangeKm.toFixed(2));
+      updateFields.etaMinutes = Math.ceil(rangeKm * 2);
+    }
+
+    const updatedRequest = await ChargingRequest.findByIdAndUpdate(req.params.id, updateFields, { new: true })
       .populate('riderId', 'name phone email')
       .populate('providerId', 'name phone email');
 
-    res.json(request);
+    res.json(updatedRequest);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

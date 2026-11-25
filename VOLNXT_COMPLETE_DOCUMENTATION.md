@@ -164,7 +164,7 @@ Linked to Rider User ID:
 ### Authentication & Password Reset (`/api/auth`)
 | Method | Endpoint | Description | Payload / Params |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register Rider or Provider | `{ name, email, phone, password, role, vehicle, ... }` |
+| `POST` | `/api/auth/register` | Register a Rider (role is assigned server-side) | `{ name, email, phone, password, vehicle, ... }` |
 | `POST` | `/api/auth/login` | Authenticate user & get JWT token | `{ email, password }` |
 | `GET` | `/api/auth/me` | Fetch active user profile + vehicle/provider data | Header: `Authorization: Bearer <token>` |
 | `POST` | `/api/auth/forgot-password` | Dispatches 6-digit OTP via Gmail SMTP | `{ email }` |
@@ -173,6 +173,7 @@ Linked to Rider User ID:
 ### Provider Stations & Discovery (`/api/providers`)
 | Method | Endpoint | Description | Payload / Params |
 | :--- | :--- | :--- | :--- |
+| `POST` | `/api/providers/register` | Register a Provider (role is assigned server-side) | `{ name, email, phone, password, providerProfile }` |
 | `GET` | `/api/providers/nearby` | Geospatial proximity search (10 - 100 km) | Query: `?lat=...&lng=...&radius=50` |
 | `GET` | `/api/providers/profile` | Get logged-in provider station profile | Header: `Bearer <token>` |
 | `PUT` | `/api/providers/status` | Toggle station status between Online / Offline | `{ isOnline: true/false }` |
@@ -197,6 +198,17 @@ Linked to Rider User ID:
 | `GET` | `/api/charging/:id` | Polls live telemetry metrics | Header: `Bearer <token>` |
 | `PUT` | `/api/charging/:id/update-battery` | Pushes real-time battery & power telemetry | `{ percentage, powerKw, voltage, current, energyKwh }` |
 | `PUT` | `/api/charging/:id/end` | Completes session, calculates fee & marks paid | `{ endBatteryPercentage }` |
+
+### Platform Administration (`/api/admin`)
+All endpoints require an authenticated `ADMIN` account. Admin accounts must be provisioned by a trusted server-side process; public registration cannot assign the `ADMIN` role.
+
+| Method | Endpoint | Description | Payload / Params |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/admin/summary` | Platform counts, active sessions, paid volume, fees, and open disputes | Header: `Authorization: Bearer <token>` |
+| `GET` | `/api/admin/:module` | List recent records for users, providers, requests, sessions, payments, disputes, ratings, reservations, vehicles, or notifications | Header: `Authorization: Bearer <token>` |
+| `PATCH` | `/api/admin/users/:id` | Activate or deactivate a rider/provider account | `{ isActive: true/false }` |
+| `PATCH` | `/api/admin/providers/:id` | Update provider verification status | `{ status: 'PENDING' / 'UNDER_REVIEW' / 'APPROVED' / 'REJECTED' / 'SUSPENDED' }` |
+| `PATCH` | `/api/admin/:module/:id` | Update an allowed status for requests, sessions, payments, disputes, or reservations | `{ status }` |
 
 ---
 

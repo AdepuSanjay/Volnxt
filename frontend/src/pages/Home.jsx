@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   MapPin, BatteryCharging, ShieldCheck, ArrowRight, Zap, 
-  Play, Pause, DollarSign, Clock, Navigation, Radio, Compass, Car,
+  Play, Pause, Clock, Navigation, Radio, Compass, Car,
   Smartphone, Star, CheckCircle2, ChevronRight, Activity, Gauge,
   HelpCircle, X, Menu, Globe, LogOut, Phone
 } from 'lucide-react';
@@ -446,6 +446,18 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [isAutoPlaying]);
 
+  // Close mobile menu on Escape key press
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [mobileMenuOpen]);
+
   const workflowSteps = [
     {
       step: "01",
@@ -528,8 +540,10 @@ const Home = () => {
           <div className="flex md:hidden items-center gap-2">
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => setMobileMenuOpen((open) => !open)}
               aria-label="Toggle mobile menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation-drawer"
               className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition border border-gray-200"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -538,169 +552,164 @@ const Home = () => {
         </div>
 
         {/* Mobile Slide-Down Menu Drawer */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-gray-100 bg-white/95 backdrop-blur-xl px-4 py-4 space-y-3 overflow-hidden text-left shadow-lg"
-            >
-              {user ? (
-                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Signed in as</div>
-                    <div className="text-sm font-bold text-black">{user.name} ({user.role})</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        logout();
-                      }}
-                      className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-200 transition"
-                      title="Log out"
-                    >
-                      <LogOut className="h-4 w-4" />
-                    </button>
-                  </div>
+        {mobileMenuOpen && (
+          <div
+            id="mobile-navigation-drawer"
+            className="absolute left-0 right-0 top-full z-[60] md:hidden border-t border-gray-100 bg-white backdrop-blur-xl px-4 py-4 space-y-3 text-left shadow-xl"
+          >
+            {user ? (
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Signed in as</div>
+                  <div className="text-sm font-bold text-black">{user.name} ({user.role})</div>
                 </div>
-              ) : (
-                /* Prominent Get a Charge & Account Actions for Guests */
-                <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-gray-50 to-cyan-50 rounded-2xl border border-emerald-100 space-y-2.5">
-                  <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
-                    Instant Mobile EV Charging
-                  </div>
+                <div className="flex items-center gap-2">
                   <Link
-                    to="/register"
+                    to={user.role === 'RIDER' ? '/rider/dashboard' : '/provider/dashboard'}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full bg-black hover:bg-gray-900 text-white text-center py-2.5 px-4 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition"
+                    className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
                   >
-                    <Car className="h-4 w-4 text-emerald-400" />
-                    <span>Get a Charge (Sign Up)</span>
-                    <ArrowRight className="h-3.5 w-3.5 ml-auto" />
+                    Dashboard
                   </Link>
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
-                    <Link
-                      to="/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-center py-2 px-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm"
-                    >
-                      Log in
-                    </Link>
-                    <Link
-                      to="/register-provider"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-center py-2 px-3 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-50 transition shadow-sm flex items-center justify-center gap-1"
-                    >
-                      <Zap className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>Host Charger</span>
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Options List */}
-              <div className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setShowHowToUse(true);
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition text-left"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <HelpCircle className="h-4 w-4 text-emerald-600" />
-                    <span>How to Use Guide</span>
-                  </span>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
-                    తెలుగు / हिन्दी / EN
-                  </span>
-                </button>
-
-                <Link
-                  to="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Car className="h-4 w-4 text-black" />
-                    <span>Get a Charge (Rider Sign Up)</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </Link>
-
-                <Link
-                  to="/register-provider"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Zap className="h-4 w-4 text-emerald-600" />
-                    <span>Host Charger & Earn (Provider Sign Up)</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </Link>
-
-                <Link
-                  to="/how-to-use"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Globe className="h-4 w-4 text-blue-600" />
-                    <span>Full Screen Documentation</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </Link>
-
-                {!user ? (
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 text-xs font-bold text-black transition"
-                  >
-                    <span>Log In to Your Account</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                ) : (
                   <button
                     type="button"
                     onClick={() => {
                       setMobileMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center justify-between p-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                    className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-200 transition"
+                    title="Log out"
                   >
-                    <span className="flex items-center gap-2">
-                      <LogOut className="h-4 w-4" />
-                      <span>Log Out</span>
-                    </span>
+                    <LogOut className="h-4 w-4" />
                   </button>
-                )}
+                </div>
               </div>
+            ) : (
+              /* Prominent Get a Charge & Account Actions for Guests */
+              <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-gray-50 to-cyan-50 rounded-2xl border border-emerald-100 space-y-2.5">
+                <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                  Instant Mobile EV Charging
+                </div>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full bg-black hover:bg-gray-900 text-white text-center py-2.5 px-4 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition"
+                >
+                  <Car className="h-4 w-4 text-emerald-400" />
+                  <span>Get a Charge (Sign Up)</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-auto" />
+                </Link>
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-center py-2 px-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition shadow-sm"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    to="/register-provider"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-center py-2 px-3 rounded-xl border border-emerald-200 text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-50 transition shadow-sm flex items-center justify-center gap-1"
+                  >
+                    <Zap className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Host Charger</span>
+                  </Link>
+                </div>
+              </div>
+            )}
 
-              {/* 24/7 Helpline */}
-              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-                <span className="flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-emerald-600" />
-                  24/7 Emergency Support
+            {/* Navigation Options List */}
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setShowHowToUse(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition text-left"
+              >
+                <span className="flex items-center gap-2.5">
+                  <HelpCircle className="h-4 w-4 text-emerald-600" />
+                  <span>How to Use Guide</span>
                 </span>
-                <span className="font-bold text-black">1800-VOLNXT</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+                  తెలుగు / हिन्दी / EN
+                </span>
+              </button>
+
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Car className="h-4 w-4 text-black" />
+                  <span>Get a Charge (Rider Sign Up)</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </Link>
+
+              <Link
+                to="/register-provider"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Zap className="h-4 w-4 text-emerald-600" />
+                  <span>Host Charger & Earn (Provider Sign Up)</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </Link>
+
+              <Link
+                to="/how-to-use"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-xs font-bold text-gray-800 transition"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Globe className="h-4 w-4 text-blue-600" />
+                  <span>Full Screen Documentation</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </Link>
+
+              {!user ? (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-xl bg-gray-50 text-xs font-bold text-black transition"
+                >
+                  <span>Log In to Your Account</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* 24/7 Helpline */}
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-emerald-600" />
+                24/7 Emergency Support
+              </span>
+              <span className="font-bold text-black">1800-VOLNXT</span>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -758,7 +767,7 @@ const Home = () => {
                 to={provideChargeLink} 
                 className="flex items-center justify-center gap-2 bg-gray-100 text-black px-6 py-3 rounded-xl font-bold text-sm sm:text-base hover:bg-gray-200 transition duration-200 border border-gray-200"
               >
-                <DollarSign className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-bold leading-none text-emerald-600">₹</span>
                 <span>Host Charger & Earn</span>
               </Link>
             </motion.div>
@@ -867,7 +876,7 @@ const Home = () => {
           <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             Effortless Mobility
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-black mt-2.5 mb-2">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-black mt-2.5 mb-4">
             How VOLNXT Powers Your Journey
           </h2>
           <p className="text-gray-600 text-sm">
