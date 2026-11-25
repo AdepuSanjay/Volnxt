@@ -51,8 +51,8 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/providers', require('./routes/providerRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
 app.use('/api/charging', require('./routes/chargingRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
-// app.use('/api/payments', require('./routes/paymentRoutes'));
 // app.use('/api/ratings', require('./routes/ratingRoutes'));
 // app.use('/api/disputes', require('./routes/disputeRoutes'));
 

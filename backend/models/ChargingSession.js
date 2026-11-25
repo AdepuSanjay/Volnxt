@@ -22,7 +22,7 @@ const chargingSessionSchema = new mongoose.Schema({
   startTime: { type: Date, default: Date.now },
   endTime: { type: Date },
 
-  status: { type: String, enum: ['IN_PROGRESS', 'CHARGING', 'COMPLETED', 'DISPUTED'], default: 'CHARGING' },
+  status: { type: String, enum: ['IN_PROGRESS', 'CHARGING', 'PAYMENT_PENDING', 'COMPLETED', 'DISPUTED'], default: 'CHARGING' },
 
   // Live telemetry metrics
   chargingPowerKw: { type: Number, default: 29.5 },

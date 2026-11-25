@@ -15,6 +15,12 @@ const startSession = async (req, res) => {
     
     const request = await ChargingRequest.findById(requestId);
     if (!request) return res.status(404).json({ message: 'Request not found' });
+    if (String(request.providerId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Only the assigned provider can start this session' });
+    }
+    if (request.status !== 'ARRIVED') {
+      return res.status(409).json({ message: 'The provider must arrive before charging starts' });
+    }
     
     request.status = 'CHARGING';
     await request.save();
@@ -49,6 +55,12 @@ const updateBattery = async (req, res) => {
     const { percentage, powerKw, voltage, current, energyKwh } = req.body;
     const session = await ChargingSession.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (String(session.providerId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Only the assigned provider can update session telemetry' });
+    }
+    if (!['CHARGING', 'IN_PROGRESS'].includes(session.status)) {
+      return res.status(409).json({ message: 'This charging session is no longer active' });
+    }
 
     if (percentage !== undefined) {
       session.currentBatteryPercentage = Number(percentage);
@@ -83,14 +95,22 @@ const updateBattery = async (req, res) => {
 
 const endSession = async (req, res) => {
   try {
-    const { endBatteryPercentage } = req.body;
     const session = await ChargingSession.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (String(session.providerId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Only the assigned provider can end this session' });
+    }
+    if (session.status === 'PAYMENT_PENDING' || session.status === 'COMPLETED') {
+      const existing = await ChargingSession.findById(session._id).populate('providerId riderId');
+      return res.json(existing);
+    }
+    if (!['CHARGING', 'IN_PROGRESS'].includes(session.status)) {
+      return res.status(409).json({ message: 'This charging session cannot be ended' });
+    }
 
-    const finalBattery = endBatteryPercentage !== undefined ? Number(endBatteryPercentage) : session.currentBatteryPercentage;
+    const finalBattery = Number(session.currentBatteryPercentage);
     session.endBatteryPercentage = finalBattery;
-    session.currentBatteryPercentage = finalBattery;
-    session.status = 'COMPLETED';
+    session.status = 'PAYMENT_PENDING';
     session.endTime = Date.now();
 
     // Calculate final amount
@@ -110,21 +130,22 @@ const endSession = async (req, res) => {
     session.providerAmount = providerAmount;
     await session.save();
 
-    const request = await ChargingRequest.findById(session.requestId);
-    if (request) {
-      request.status = 'COMPLETED';
-      await request.save();
-    }
-
-    await Payment.create({
-      sessionId: session._id,
-      riderId: session.riderId,
-      providerId: session.providerId,
-      grossAmount: session.finalAmount,
-      platformFee,
-      providerAmount,
-      status: 'PAID'
-    });
+    await Payment.findOneAndUpdate(
+      { sessionId: session._id },
+      {
+        $setOnInsert: {
+          sessionId: session._id,
+          riderId: session.riderId,
+          providerId: session.providerId,
+          grossAmount: session.finalAmount,
+          platformFee,
+          providerAmount,
+          currency: 'INR',
+          status: 'PENDING'
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     const populated = await ChargingSession.findById(session._id).populate('providerId riderId');
     res.json(populated);
@@ -137,6 +158,12 @@ const endSession = async (req, res) => {
 const getSession = async (req, res) => {
   try {
     const session = await ChargingSession.findById(req.params.id).populate('providerId riderId');
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (String(session.riderId?._id || session.riderId) !== String(req.user._id)
+      && String(session.providerId?._id || session.providerId) !== String(req.user._id)
+      && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Not authorized to view this session' });
+    }
     res.json(session);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -147,7 +174,7 @@ const getActiveSession = async (req, res) => {
   try {
     const session = await ChargingSession.findOne({
       $or: [{ riderId: req.user._id }, { providerId: req.user._id }],
-      status: { $in: ['CHARGING', 'IN_PROGRESS'] }
+      status: { $in: ['CHARGING', 'IN_PROGRESS', 'PAYMENT_PENDING'] }
     }).populate('providerId riderId');
     res.json(session || null);
   } catch (error) {

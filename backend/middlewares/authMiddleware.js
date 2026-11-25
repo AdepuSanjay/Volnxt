@@ -42,4 +42,12 @@ const provider = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin, provider };
+const rider = (req, res, next) => {
+  if (req.user && req.user.role === 'RIDER') {
+    next();
+  } else {
+    res.status(401).json({ message: 'Not authorized as a rider' });
+  }
+};
+
+module.exports = { protect, admin, provider, rider };

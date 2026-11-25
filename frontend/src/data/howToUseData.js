@@ -43,8 +43,8 @@ export const HOW_TO_USE_TRANSLATIONS = {
       },
       {
         step: 5,
-        title: "Real-Time Telemetry & Cashless Auto-Pay",
-        desc: "Monitor live battery percentage surge and power delivery (+kWh) directly on your screen. Once your vehicle is charged, payment is automatically processed with fixed upfront rates."
+        title: "Real-Time Telemetry & Secure Online Payment",
+        desc: "Monitor live battery percentage and power delivery (+kWh) on your screen. Once charging ends, review the final amount and pay securely online."
       }
     ],
     riderTipsTitle: "Rider Pro Tips:",

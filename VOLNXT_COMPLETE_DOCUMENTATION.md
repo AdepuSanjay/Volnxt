@@ -194,10 +194,18 @@ Linked to Rider User ID:
 | Method | Endpoint | Description | Payload / Params |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/charging/start` | Starts high-voltage charging session | `{ requestId, startBatteryPercentage, targetBatteryPercentage, priceRate }` |
-| `GET` | `/api/charging/active` | Detects any running session for logged-in user | Header: `Bearer <token>` |
+| `GET` | `/api/charging/active` | Detects an active or payment-pending session for logged-in user | Header: `Bearer <token>` |
 | `GET` | `/api/charging/:id` | Polls live telemetry metrics | Header: `Bearer <token>` |
 | `PUT` | `/api/charging/:id/update-battery` | Pushes real-time battery & power telemetry | `{ percentage, powerKw, voltage, current, energyKwh }` |
-| `PUT` | `/api/charging/:id/end` | Completes session, calculates fee & marks paid | `{ endBatteryPercentage }` |
+| `PUT` | `/api/charging/:id/end` | Provider ends the charge and freezes the amount due | Header: `Bearer <token>` |
+
+### Online Payments (`/api/payments`)
+Razorpay credentials are server-side only. Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in the backend environment. The backend returns the public key ID with each order; never place the key secret in the frontend. Use test-mode credentials while developing.
+
+| Method | Endpoint | Description | Payload / Params |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/payments/order` | Rider creates or resumes a Razorpay order for a payment-pending session | `{ sessionId }` |
+| `POST` | `/api/payments/verify` | Verifies the checkout signature, confirms/captures the gateway payment, and marks the session complete | Razorpay Checkout response fields |
 
 ### Platform Administration (`/api/admin`)
 All endpoints require an authenticated `ADMIN` account. Admin accounts must be provisioned by a trusted server-side process; public registration cannot assign the `ADMIN` role.
@@ -208,7 +216,7 @@ All endpoints require an authenticated `ADMIN` account. Admin accounts must be p
 | `GET` | `/api/admin/:module` | List recent records for users, providers, requests, sessions, payments, disputes, ratings, reservations, vehicles, or notifications | Header: `Authorization: Bearer <token>` |
 | `PATCH` | `/api/admin/users/:id` | Activate or deactivate a rider/provider account | `{ isActive: true/false }` |
 | `PATCH` | `/api/admin/providers/:id` | Update provider verification status | `{ status: 'PENDING' / 'UNDER_REVIEW' / 'APPROVED' / 'REJECTED' / 'SUSPENDED' }` |
-| `PATCH` | `/api/admin/:module/:id` | Update an allowed status for requests, sessions, payments, disputes, or reservations | `{ status }` |
+| `PATCH` | `/api/admin/:module/:id` | Update an allowed status for requests, disputes, or reservations; sessions and payments are gateway-managed and read-only | `{ status }` |
 
 ---
 

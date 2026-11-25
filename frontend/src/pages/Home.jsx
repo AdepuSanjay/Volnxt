@@ -384,7 +384,7 @@ const WorkflowAnimationStage = ({ activeStep, isPlaying, onTogglePlay, onSelectS
 
                   <div className="bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl flex items-center justify-between text-xs text-gray-300">
                     <span>Rate: ₹15 / kWh</span>
-                    <span className="text-emerald-400 font-bold">Auto-Paid</span>
+                    <span className="text-emerald-400 font-bold">Secure Checkout</span>
                   </div>
                 </div>
               </div>

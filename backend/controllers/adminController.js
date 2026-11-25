@@ -25,8 +25,6 @@ const resources = {
 const statusOptions = {
   providers: ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED'],
   requests: ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'CHARGING', 'COMPLETED', 'CANCELLED', 'EXPIRED'],
-  sessions: ['IN_PROGRESS', 'CHARGING', 'COMPLETED', 'DISPUTED'],
-  payments: ['PENDING', 'PAID', 'FAILED', 'REFUNDED', 'DISPUTED'],
   disputes: ['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'],
   reservations: ['ACTIVE', 'EXPIRED', 'COMPLETED', 'CANCELLED']
 };

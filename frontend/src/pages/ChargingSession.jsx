@@ -22,6 +22,16 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const loadRazorpayCheckout = () => new Promise((resolve) => {
+  if (window.Razorpay) return resolve(true);
+
+  const script = document.createElement('script');
+  script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  script.onload = () => resolve(true);
+  script.onerror = () => resolve(false);
+  document.body.appendChild(script);
+});
+
 const ChargingSession = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
@@ -29,6 +39,9 @@ const ChargingSession = () => {
   const [session, setSession] = useState(null);
   const [newBattery, setNewBattery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [endingSession, setEndingSession] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   
   // Real-time telemetry state
   const [chargingSpeed, setChargingSpeed] = useState(29.4); // kW
@@ -40,7 +53,7 @@ const ChargingSession = () => {
     { time: '00:03', msg: 'Vehicle BMS handshake acknowledged (CAN protocol)' },
     { time: '00:06', msg: 'High-current DC power flow established' }
   ]);
-  const [isAutoCharging, setIsAutoCharging] = useState(true);
+  const [isAutoCharging, setIsAutoCharging] = useState(user?.role === 'PROVIDER');
 
   // Rating & completion state
   const [rating, setRating] = useState(0);
@@ -82,7 +95,7 @@ const ChargingSession = () => {
 
   // Live Auto-Telemetry Simulation: ticks battery and energy up smoothly
   useEffect(() => {
-    if (!session || session.status === 'COMPLETED' || !isAutoCharging) return;
+    if (!session || ['PAYMENT_PENDING', 'COMPLETED'].includes(session.status) || !isAutoCharging) return;
 
     const timer = setInterval(() => {
       // Dynamic power oscillation
@@ -155,16 +168,65 @@ const ChargingSession = () => {
   };
 
   const handleEndSession = async () => {
+    setEndingSession(true);
+    setPaymentError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`${API_BASE_URL}/api/charging/${id}/end`, { 
-        endBatteryPercentage: session.currentBatteryPercentage 
-      }, {
+      const res = await axios.put(`${API_BASE_URL}/api/charging/${id}/end`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSession(res.data);
     } catch (error) {
       console.error(error);
+      setPaymentError(error.response?.data?.message || 'Could not stop the charging session. Please try again.');
+    } finally {
+      setEndingSession(false);
+    }
+  };
+
+  const handlePayNow = async () => {
+    setPaymentLoading(true);
+    setPaymentError('');
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      const orderResponse = await axios.post(`${API_BASE_URL}/api/payments/order`, { sessionId: id }, { headers });
+      const order = orderResponse.data;
+      const checkoutLoaded = await loadRazorpayCheckout();
+      if (!checkoutLoaded) throw new Error('Razorpay Checkout could not be loaded. Check your internet connection.');
+
+      const checkout = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'VOLNXT',
+        description: `Charging session ${String(id).slice(-8)}`,
+        order_id: order.orderId,
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        theme: { color: '#047857' },
+        handler: async (paymentResponse) => {
+          try {
+            const verificationResponse = await axios.post(`${API_BASE_URL}/api/payments/verify`, paymentResponse, { headers });
+            setSession(verificationResponse.data.session);
+          } catch (error) {
+            setPaymentError(error.response?.data?.message || 'Payment was received but could not be verified. Please retry or contact support.');
+          }
+        },
+        modal: {
+          ondismiss: () => setPaymentLoading(false)
+        }
+      });
+      checkout.on('payment.failed', (event) => {
+        setPaymentError(event.error?.description || 'Payment failed. You can try again.');
+      });
+      checkout.open();
+    } catch (error) {
+      setPaymentError(error.response?.data?.message || error.message || 'Could not start payment. Please try again.');
+      setPaymentLoading(false);
     }
   };
 
@@ -234,7 +296,35 @@ const ChargingSession = () => {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <AnimatePresence mode="wait">
-          {session.status !== 'COMPLETED' ? (
+          {session.status === 'PAYMENT_PENDING' ? (
+            <motion.div
+              key="payment-pending"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="overflow-hidden rounded-3xl border border-gray-200 bg-white text-center shadow-xl"
+            >
+              <div className="border-b border-blue-100 bg-blue-50 px-5 py-8 sm:px-8">
+                <div className="mb-4 inline-flex rounded-full bg-blue-100 p-4 text-blue-700"><ShieldCheck className="h-9 w-9" /></div>
+                <h2 className="text-2xl font-black text-black sm:text-3xl">Charging complete</h2>
+                <p className="mt-2 text-sm font-medium text-slate-600">{user?.role === 'RIDER' ? 'Review and complete your secure online payment.' : 'Waiting for the rider to complete payment.'}</p>
+              </div>
+              <div className="p-5 sm:p-8">
+                <div className="mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Amount due</div>
+                  <div className="mt-1 text-4xl font-black text-emerald-700">₹{session.finalAmount}</div>
+                  <div className="mt-2 text-xs text-gray-500">Includes a platform fee of ₹{session.platformFee}</div>
+                </div>
+                {paymentError && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700">{paymentError}</p>}
+                {user?.role === 'RIDER' ? (
+                  <button type="button" onClick={handlePayNow} disabled={paymentLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-4 text-base font-bold text-white transition hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">
+                    {paymentLoading ? 'Opening secure checkout…' : `Pay ₹${session.finalAmount} securely`}
+                  </button>
+                ) : (
+                  <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-600">The rider will see the payment request in their active session.</p>
+                )}
+              </div>
+            </motion.div>
+          ) : session.status !== 'COMPLETED' ? (
             <motion.div 
               key="charging"
               initial={{ opacity: 0, scale: 0.98 }}
@@ -368,7 +458,7 @@ const ChargingSession = () => {
               </div>
 
               {/* Interactive Controls & Session Actions */}
-              <div className="p-6 space-y-4">
+              {user?.role === 'PROVIDER' ? <div className="p-6 space-y-4">
                 
                 {/* Manual Battery Override & Speed Controls */}
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -407,9 +497,9 @@ const ChargingSession = () => {
                   className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 text-base"
                 >
                   <Zap className="h-5 w-5" />
-                  <span>Stop Charging & Settle Session</span>
+                  <span>{endingSession ? 'Ending session…' : 'Stop Charging & Request Payment'}</span>
                 </button>
-              </div>
+              </div> : <div className="px-6 pb-6 text-center text-sm font-medium text-slate-500">Your provider is updating the charging session. Payment will be available when charging ends.</div>}
             </motion.div>
           ) : (
             /* ================= COMPLETED RECEIPT VIEW ================= */
@@ -425,7 +515,7 @@ const ChargingSession = () => {
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-black mb-1">Charging Session Complete</h2>
                 <p className="text-emerald-700 font-bold text-sm sm:text-base">
-                  Payment settled automatically with upfront pricing.
+                  Payment verified securely with Razorpay.
                 </p>
               </div>
 
