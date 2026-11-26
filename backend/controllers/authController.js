@@ -1,11 +1,10 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+const JWT_SECRET = require('../config/jwt');
 const ProviderProfile = require('../models/ProviderProfile');
 const Vehicle = require('../models/Vehicle');
 const { sendOtpEmail } = require('../utils/emailService');
-
-const JWT_SECRET = process.env.JWT_SECRET;
 
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
@@ -26,27 +25,35 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
+    const userRole = req.registrationRole || 'RIDER';
     const normalizedEmail = email.trim().toLowerCase();
-    const userExists = await User.findOne({ email: normalizedEmail }).collation({ locale: 'en', strength: 2 });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+    const existingUser = await User.findOne({ email: normalizedEmail }).collation({ locale: 'en', strength: 2 });
+    let user = existingUser;
+    let isNewUser = false;
+
+    if (existingUser) {
+      const canResumeProviderRegistration = userRole === 'PROVIDER'
+        && existingUser.role === 'PROVIDER'
+        && await bcrypt.compare(password, existingUser.password);
+      if (!canResumeProviderRegistration) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+    } else {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      user = await User.create({
+        name: name || ownerName || businessName || 'User',
+        email: normalizedEmail,
+        phone,
+        password: hashedPassword,
+        role: userRole,
+        aadharNumber,
+        profilePhoto
+      });
+      isNewUser = true;
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const userRole = req.registrationRole || 'RIDER';
-    const user = await User.create({ 
-      name: name || ownerName || businessName || 'User', 
-      email: normalizedEmail,
-      phone, 
-      password: hashedPassword, 
-      role: userRole, 
-      aadharNumber, 
-      profilePhoto 
-    });
-
-    if (user) {
+    try {
       if (user.role === 'RIDER' && vehicle) {
         await Vehicle.create({
           userId: user._id,
@@ -61,7 +68,7 @@ const registerUser = async (req, res) => {
           supportedChargingType: vehicle.supportedChargingType,
           maxChargingPower: vehicle.maxChargingPower
         });
-      } else if (user.role === 'PROVIDER') {
+      } else if (user.role === 'PROVIDER' && !(await ProviderProfile.exists({ userId: user._id }))) {
         const p = providerProfile || req.body;
         await ProviderProfile.create({
           userId: user._id,
@@ -90,18 +97,19 @@ const registerUser = async (req, res) => {
           isAvailable: true
         });
       }
-
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
+    } catch (error) {
+      if (isNewUser) await User.deleteOne({ _id: user._id });
+      throw error;
     }
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -20,7 +20,7 @@ const Login = () => {
       await login(email, password);
       // Navigation is handled automatically by AuthContext or App.jsx routing
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }

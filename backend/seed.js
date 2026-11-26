@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const connectDB = require('./config/db');
 const User = require('./models/User');
 const ProviderProfile = require('./models/ProviderProfile');

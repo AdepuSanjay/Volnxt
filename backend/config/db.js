@@ -1,6 +1,9 @@
+const dns = require('node:dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const mongoose = require('mongoose');
 
-const mongoUri = 'mongodb+srv://adepusanjay444_db_user:abc1234@cluster0.i0fg76m.mongodb.net/';
+const mongoUri = 'mongodb+srv://adepusanjay192_db_user:sanjay123@cluster0.ohkmplx.mongodb.net/';
 
 let connectionPromise;
 
