@@ -5,7 +5,7 @@ const ProviderProfile = require('../models/ProviderProfile');
 const Vehicle = require('../models/Vehicle');
 const { sendOtpEmail } = require('../utils/emailService');
 
-const JWT_SECRET = 'replace-with-a-long-random-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
@@ -22,7 +22,12 @@ const registerUser = async (req, res) => {
       availableDays, startTime, endTime, safetyDeclaration
     } = req.body;
 
-    const userExists = await User.findOne({ email });
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const userExists = await User.findOne({ email: normalizedEmail }).collation({ locale: 'en', strength: 2 });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -33,7 +38,7 @@ const registerUser = async (req, res) => {
     const userRole = req.registrationRole || 'RIDER';
     const user = await User.create({ 
       name: name || ownerName || businessName || 'User', 
-      email, 
+      email: normalizedEmail,
       phone, 
       password: hashedPassword, 
       role: userRole, 
@@ -105,8 +110,12 @@ const registerUser = async (req, res) => {
 const authUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).collation({ locale: 'en', strength: 2 });
 
     if (user && user.isActive !== false && (await bcrypt.compare(password, user.password))) {
       res.json({

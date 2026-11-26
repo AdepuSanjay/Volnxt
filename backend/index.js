@@ -4,9 +4,6 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Middleware
@@ -42,6 +39,18 @@ app.use(cors({
 app.use(helmet());
 app.use(morgan('dev'));
 
+if (process.env.VERCEL) {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDB();
+      next();
+    } catch (error) {
+      console.error(error.message);
+      res.status(503).json({ message: 'Database is currently unavailable' });
+    }
+  });
+}
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/providers', require('./routes/providerRoutes'));
@@ -59,9 +68,16 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error(error.message);
+      process.exit(1);
+    });
 }
 
 module.exports = app;

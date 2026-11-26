@@ -1,13 +1,33 @@
+require('dotenv').config();
+
 const mongoose = require('mongoose');
 
+let connectionPromise;
+
 const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
+
+  if (connectionPromise) return connectionPromise;
+
+  const mongoUri = process.env.MONGO_URI;
+  if (!mongoUri) {
+    throw new Error('MONGO_URI is not configured');
+  }
+
+  connectionPromise = mongoose.connect(mongoUri)
+    .then((conn) => {
+      console.log('MongoDB Connected');
+      return conn;
+    })
+    .catch((error) => {
+      connectionPromise = null;
+      throw error;
+    });
+
   try {
-    const mongoUri = 'mongodb://127.0.0.1:27017/volnxt';
-    const conn = await mongoose.connect(mongoUri);
-    console.log("MongoDB Connected");
+    return await connectionPromise;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    throw new Error(`MongoDB connection failed: ${error.message}`, { cause: error });
   }
 };
 
