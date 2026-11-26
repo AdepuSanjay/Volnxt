@@ -1,6 +1,6 @@
-require('dotenv').config();
-
 const mongoose = require('mongoose');
+
+const mongoUri = 'mongodb+srv://adepusanjay444_db_user:abc1234@cluster0.i0fg76m.mongodb.net/';
 
 let connectionPromise;
 
@@ -8,11 +8,6 @@ const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return mongoose.connection;
 
   if (connectionPromise) return connectionPromise;
-
-  const mongoUri = process.env.MONGO_URI;
-  if (!mongoUri) {
-    throw new Error('MONGO_URI is not configured');
-  }
 
   connectionPromise = mongoose.connect(mongoUri)
     .then((conn) => {
