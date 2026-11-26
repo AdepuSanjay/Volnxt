@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 const connectDB = require('./config/db');
 const User = require('./models/User');
@@ -8,7 +7,6 @@ const Vehicle = require('./models/Vehicle');
 const ChargingRequest = require('./models/ChargingRequest');
 const ChargingSession = require('./models/ChargingSession');
 
-dotenv.config();
 connectDB();
 
 const importData = async () => {

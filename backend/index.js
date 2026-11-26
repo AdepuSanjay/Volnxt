@@ -1,12 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
-
-// Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -20,7 +16,7 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:5000',
   'https://volnxt-nbof.vercel.app',
-  process.env.CLIENT_URL
+  'http://localhost:5173'
 ].filter(Boolean);
 
 app.use(express.json());

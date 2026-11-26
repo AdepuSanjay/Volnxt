@@ -4,9 +4,12 @@ const ChargingRequest = require('../models/ChargingRequest');
 const ChargingSession = require('../models/ChargingSession');
 const Payment = require('../models/Payment');
 
+const RAZORPAY_KEY_ID = 'rzp_test_your_key_id';
+const RAZORPAY_KEY_SECRET = 'your_razorpay_test_key_secret';
+
 const getRazorpayClient = () => {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keyId = RAZORPAY_KEY_ID;
+  const keySecret = RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) {
     const error = new Error('Razorpay is not configured');
     error.status = 503;
@@ -40,7 +43,7 @@ const createOrder = async (req, res) => {
 
     if (payment?.status === 'PENDING' && payment.razorpayOrderId && payment.amountPaise === amountPaise) {
       return res.json({
-        keyId: process.env.RAZORPAY_KEY_ID,
+        keyId: RAZORPAY_KEY_ID,
         orderId: payment.razorpayOrderId,
         amount: payment.amountPaise,
         currency: payment.currency || 'INR',
@@ -72,7 +75,7 @@ const createOrder = async (req, res) => {
     await payment.save();
 
     res.status(201).json({
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: RAZORPAY_KEY_ID,
       orderId: order.id,
       amount: amountPaise,
       currency: 'INR',
@@ -103,9 +106,7 @@ const verifyPayment = async (req, res) => {
       return res.json({ session: completedSession, payment });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) return res.status(503).json({ message: 'Razorpay is not configured' });
-    const expectedSignature = crypto.createHmac('sha256', keySecret).update(`${orderId}|${paymentId}`).digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex');
     const expectedBuffer = Buffer.from(expectedSignature, 'hex');
     const signatureBuffer = Buffer.from(signature, 'hex');
     if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {

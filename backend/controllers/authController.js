@@ -5,7 +5,7 @@ const ProviderProfile = require('../models/ProviderProfile');
 const Vehicle = require('../models/Vehicle');
 const { sendOtpEmail } = require('../utils/emailService');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'voltroutesecretkey123';
+const JWT_SECRET = 'replace-with-a-long-random-secret';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
